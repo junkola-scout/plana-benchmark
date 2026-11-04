@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 447" role="img" aria-label="Junkola — Communication clutter into company awareness">
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@800&amp;display=swap");</style></defs>
+<g transform="translate(40,70) scale(2.6)">
+<path d="M0.0 12.6 L4.7 81.9 L9.3 13.7 L14.0 66.7 L18.6 22.7 L23.3 63.5 L27.9 27.0 L32.6 58.6 L37.2 36.6 L41.9 53.6 L46.5 41.3 L51.2 47.5 L55.8 43.9 L60.5 45.0 L110.0 45.0" fill="none" stroke="#F45209" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="26.9" cy="3.5" r="2.5" fill="#F45209"/>
+<circle cx="42.1" cy="51.6" r="3.0" fill="#F45209"/>
+<circle cx="17.3" cy="62.6" r="2.4" fill="#F45209"/>
+<circle cx="31.9" cy="41.1" r="2.9" fill="#F45209"/>
+<circle cx="52.0" cy="42.7" r="2.5" fill="#F45209"/>
+<circle cx="3.3" cy="63.1" r="2.5" fill="#F45209"/>
+<circle cx="54.6" cy="74.0" r="1.8" fill="#F45209"/>
+<circle cx="21.2" cy="60.2" r="1.2" fill="#F45209"/>
+<circle cx="25.4" cy="15.1" r="1.4" fill="#F45209"/>
+</g>
+<text x="360" y="252" font-family="'Libre Franklin','Arial Black',Arial,sans-serif" font-weight="800" font-size="212" letter-spacing="-6" fill="#F2E9D7">JUNKOLA</text>
+<text x="1318" y="110" font-family="'Libre Franklin',Arial,sans-serif" font-weight="700" font-size="34" fill="#F2E9D7">TM</text>
+<rect x="362" y="278" width="1000" height="7" fill="#F2E9D7"/>
+<text x="365" y="340" font-family="'Libre Franklin',Arial,sans-serif" font-weight="500" font-size="42" fill="#F2E9D7">Communication clutter into company awareness</text>
+</svg>

@@ -1,14 +1,14 @@
 {
-  "name": "PLANA Company Brain",
-  "short_name": "PLANA Brain",
+  "name": "Junkola Hyperspace",
+  "short_name": "Hyperspace",
   "description": "Traceable company knowledge — issues, risks, tasks, decisions and follow-ups, grounded in your engagements and cited by serial.",
   "id": "./",
   "start_url": "./platform/platform.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0f0f10",
-  "theme_color": "#0f0f10",
+  "background_color": "#10182A",
+  "theme_color": "#10182A",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },

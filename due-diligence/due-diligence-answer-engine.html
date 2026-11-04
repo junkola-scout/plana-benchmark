@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plans.aero — Investor Data Room</title>
+<title>Junkola — Investor Data Room</title>
 <!--
   ============================================================================
   INVESTOR PORTAL — plans.aero/invest (password-protected page on the company
@@ -11,16 +11,16 @@
   run — Chat / Search / Browse FAQ / My Questions all work against the local
   seed data below.
 
-  It links to dd-admin.html (the PLANA due diligence admin, which lives
+  It links to dd-admin.html (the Junkola due diligence admin, which lives
   inside the knowledge-management system on a different host/app) in exactly
-  one place: the "Open in PLANA →" button inside the escalation email
+  one place: the "Open in Junkola →" button inside the escalation email
   preview. That link carries the unanswered question over as URL query
   params (newq, qid, cat, askedBy) — see the "CROSS-FILE HANDOFF" comment
   below the SEED_FAQ block for the full contract your backend should
   eventually replace this with (a real API write + authenticated deep link),
   rather than raw text in a URL.
 
-  This page also *receives* a handoff back: when PLANA notifies the investor
+  This page also *receives* a handoff back: when Junkola notifies the investor
   their question has been answered, the email's "View my answer" button
   points here with ?answered=1&qid=…&q=…&a=…&cat=…&by=… — on load this file
   reads those params, inserts the new Q&A, and scrolls/highlights it.
@@ -28,32 +28,32 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ============ Brand tokens (matches PLANA Brain dashboard) ============
-   #e50602 red · #e56203 orange · #414042 gray · #000 · #fff   */
+/* ============ Brand tokens (matches Hyperspace dashboard) ============
+   #E0341C red · #F45209 orange · #3A4152 gray · #000 · #fff   */
 :root{
-  --brand-red:#e50602;
-  --brand-orange:#e56203;
-  --brand-gray:#414042;
-  --bg:#0f0f10;
-  --surface:#1a1a1c;
-  --raised:#232326;
-  --line:#39383b;
-  --line-strong:#525155;
-  --text:#ffffff;
-  --muted:#a8a7ac;
-  --faint:#7c7b80;
-  --focus:#e56203;
+  --brand-red:#E0341C;
+  --brand-orange:#F45209;
+  --brand-gray:#3A4152;
+  --bg:#10182A;
+  --surface:#161F34;
+  --raised:#222D48;
+  --line:#2A354F;
+  --line-strong:#3E4B6A;
+  --text:#F2E9D7;
+  --muted:#B4AFA3;
+  --faint:#8A8678;
+  --focus:#F45209;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{font-size:16px}
 body{
-  font-family:"Google Sans","Google Sans Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-family:"Libre Franklin",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   background:
     radial-gradient(2400px 850px at 50% 122%,
-      rgba(229,6,2,.38) 0%, rgba(229,62,3,.18) 30%, rgba(229,98,3,.07) 52%, transparent 72%),
-    #0c0c0d;
+      rgba(224,52,28,.38) 0%, rgba(224,52,28,.18) 30%, rgba(244,82,9,.07) 52%, transparent 72%),
+    #0B1120;
   background-attachment:fixed;
   color:var(--text);
   font-size:14px;line-height:1.5;
@@ -92,7 +92,7 @@ a{color:inherit}
 .seg button[aria-pressed="true"]{background:#fff;color:#000;font-weight:700}
 @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:300;
-  background:linear-gradient(180deg,#1e1e21,#141416);border:1px solid var(--brand-orange);
+  background:linear-gradient(180deg,#1B2540,#121A2E);border:1px solid var(--brand-orange);
   border-radius:10px;padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:8px;
   box-shadow:0 12px 40px rgba(0,0,0,.5);animation:toastIn .25s ease both}
 .toast .tdot{width:7px;height:7px;border-radius:50%;background:var(--brand-orange);flex-shrink:0}
@@ -107,7 +107,7 @@ a{color:inherit}
 #scrim.show{opacity:1;pointer-events:auto}
 #emailOvl{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,94vw);
   max-height:84vh;display:none;flex-direction:column;z-index:187;
-  background:linear-gradient(180deg,#1e1e21 0%,var(--surface) 30%,#161618 100%);
+  background:linear-gradient(180deg,#1B2540 0%,var(--surface) 30%,#121A2E 100%);
   border:1px solid var(--line-strong);border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.65);overflow:hidden}
 #emailOvl.show{display:flex}
 .mo-head{display:flex;align-items:flex-start;gap:12px;padding:16px 20px 13px;border-bottom:1px solid var(--line)}
@@ -124,18 +124,18 @@ a{color:inherit}
 /* light-mode transactional email preview — the investor-facing "answered"
    notification. Deliberately light (not the dark app theme): renders
    reliably across every email client and matches inbox expectations. */
-.email-light{background:#f4f4f5;border-radius:10px;overflow:hidden;font-family:"Google Sans","Google Sans Text",-apple-system,sans-serif}
-.el-head{background:#0f0f10;padding:16px 22px}
+.email-light{background:#f4f4f5;border-radius:10px;overflow:hidden;font-family:"Libre Franklin",-apple-system,sans-serif}
+.el-head{background:#10182A;padding:16px 22px}
 .el-logo{color:#fff;font-weight:800;font-size:15px;letter-spacing:.02em}
-.el-body{background:#ffffff;padding:26px 24px 30px;color:#1a1a1c}
-.el-eyebrow{font-size:10.5px;letter-spacing:.1em;color:#e56203;font-weight:800;margin-bottom:8px}
+.el-body{background:#ffffff;padding:26px 24px 30px;color:#161F34}
+.el-eyebrow{font-size:10.5px;letter-spacing:.1em;color:#F45209;font-weight:800;margin-bottom:8px}
 .el-body h3{font-size:19px;font-weight:800;color:#111;margin-bottom:12px}
-.el-body p{font-size:13.5px;color:#414042;line-height:1.65;margin-bottom:14px}
-.el-quote{border-left:3px solid #e56203;background:#f9f4ef;padding:10px 14px;font-size:13.5px;
-  color:#1a1a1c;font-style:italic;margin-bottom:18px;border-radius:0 6px 6px 0}
-.el-cta{display:inline-block;background:linear-gradient(120deg,#e50602,#e56203 140%);color:#fff;
+.el-body p{font-size:13.5px;color:#3A4152;line-height:1.65;margin-bottom:14px}
+.el-quote{border-left:3px solid #F45209;background:#f9f4ef;padding:10px 14px;font-size:13.5px;
+  color:#161F34;font-style:italic;margin-bottom:18px;border-radius:0 6px 6px 0}
+.el-cta{display:inline-block;background:linear-gradient(120deg,#E0341C,#F45209 140%);color:#fff;
   font-weight:700;font-size:13.5px;padding:11px 22px;border-radius:8px;text-decoration:none;margin-bottom:18px}
-.el-foot{font-size:12px;color:#7c7b80;margin-bottom:0}
+.el-foot{font-size:12px;color:#8A8678;margin-bottom:0}
 
 /* ============ Investor top bar ============ */
 .inv-top{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--line);
@@ -161,7 +161,7 @@ a{color:inherit}
   border:1.5px solid var(--bg)}
 .bell-badge[hidden]{display:none}
 .bell-dd{position:absolute;top:42px;right:0;width:320px;z-index:60;display:none;
-  background:linear-gradient(180deg,#1e1e21 0%,var(--surface) 30%,#161618 100%);
+  background:linear-gradient(180deg,#1B2540 0%,var(--surface) 30%,#121A2E 100%);
   border:1px solid var(--line-strong);border-radius:11px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
 .bell-dd.show{display:block}
 .bell-dd-head{padding:12px 14px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700}
@@ -183,7 +183,7 @@ a{color:inherit}
 .chip.status-answered{background:#1f3a28;color:#7bd88f;border:1px solid #2f5c3c}
 
 /* deep-link highlight on the FAQ item the investor is returned to */
-@keyframes flashHi{0%{box-shadow:0 0 0 0 rgba(229,98,3,.55);background:rgba(229,98,3,.14)}100%{box-shadow:0 0 0 0 rgba(229,98,3,0);background:transparent}}
+@keyframes flashHi{0%{box-shadow:0 0 0 0 rgba(244,82,9,.55);background:rgba(244,82,9,.14)}100%{box-shadow:0 0 0 0 rgba(244,82,9,0);background:transparent}}
 .faq-item.flash{animation:flashHi 1.8s ease-out 2}
 .inline-link{color:var(--brand-orange);text-decoration:underline;font:inherit;padding:0}
 
@@ -195,7 +195,7 @@ a{color:inherit}
 
 /* ---- Chat ---- */
 #invChatPane{display:flex;flex-direction:column}
-.chat-window{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#161618,#111112);
+.chat-window{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#121A2E,#111112);
   min-height:360px;max-height:520px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
 .msg{display:flex;gap:10px;max-width:82%}
 .msg.user{align-self:flex-end;flex-direction:row-reverse}
@@ -256,10 +256,10 @@ a{color:inherit}
   padding:24px;
   background:
     radial-gradient(2400px 850px at 50% 122%,
-      rgba(229,6,2,.38) 0%, rgba(229,62,3,.18) 30%, rgba(229,98,3,.07) 52%, transparent 72%),
-    #0c0c0d;}
+      rgba(224,52,28,.38) 0%, rgba(224,52,28,.18) 30%, rgba(244,82,9,.07) 52%, transparent 72%),
+    #0B1120;}
 #signupGate[hidden]{display:none !important}
-.signup-card{width:min(480px,100%);background:linear-gradient(180deg,#1e1e21 0%,var(--surface) 30%,#161618 100%);
+.signup-card{width:min(480px,100%);background:linear-gradient(180deg,#1B2540 0%,var(--surface) 30%,#121A2E 100%);
   border:1px solid var(--line-strong);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.65);
   padding:30px 32px 26px}
 .signup-card img{height:26px;width:auto;margin-bottom:18px}
@@ -280,7 +280,7 @@ a{color:inherit}
 .role-item:hover{background:var(--raised)}
 .role-item input[type="checkbox"]{width:16px;height:16px;accent-color:var(--brand-orange);flex-shrink:0;cursor:pointer}
 .role-item span{font-size:13.5px}
-.role-item.checked{background:rgba(229,98,3,.08)}
+.role-item.checked{background:rgba(244,82,9,.08)}
 .su-other-input{margin:0 13px 12px;display:none}
 .su-other-input.show{display:block}
 .su-other-input input{width:100%;min-height:36px;border:1px solid var(--line-strong);background:var(--bg);
@@ -298,13 +298,13 @@ a{color:inherit}
 <!-- Dev bar — orientation for whoever is testing the prototype. Delete this div when shipping. -->
 <div class="dev-bar">
   <span>📄 <b>index.html</b> — investor portal (public site)</span>
-  <a href="dd-admin.html" target="_blank">Open dd-admin.html (PLANA) →</a>
+  <a href="dd-admin.html" target="_blank">Open dd-admin.html (Junkola) →</a>
 </div>
 
 <!-- ============ SIGN-UP GATE — shown before the investor portal ============ -->
 <div id="signupGate">
   <div class="signup-card">
-    <img src="data:image/png;base64,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" alt="PLANA">
+    <img src="../shared/junkola-wordmark-white.svg" alt="Junkola Hyperspace">
 
     <!-- INVITE-LOCKED VIEW — shown when there's no valid ?invite= token in
          the URL. This is the default: the sign-up form below never renders
@@ -357,7 +357,7 @@ a{color:inherit}
           <div class="su-error" id="suError">Please fill in your name, email, and select one role.</div>
         </div>
         <button type="submit" class="btn btn-primary" id="suSubmit" disabled>Continue to the data room →</button>
-        <div class="su-legal">By continuing you agree this portal's contents are confidential and subject to your NDA with Plans.aero.</div>
+        <div class="su-legal">By continuing you agree this portal's contents are confidential and subject to your NDA with Junkola.</div>
       </form>
     </div>
   </div>
@@ -365,11 +365,11 @@ a{color:inherit}
 
 <div id="appMain" hidden>
 <div class="inv-top">
-  <img src="data:image/png;base64,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" alt="PLANA">
+  <img src="../shared/junkola-wordmark-white.svg" alt="Junkola Hyperspace">
   <div class="sep"></div>
   <div>
-    <h1>Plans.aero — Investor Data Room</h1>
-    <div class="sub">Due diligence Q&amp;A, powered by PLANA</div>
+    <h1>Junkola — Investor Data Room</h1>
+    <div class="sub">Due diligence Q&amp;A, powered by Junkola</div>
   </div>
   <div class="inv-user">
     <span class="inv-lock">🔒 Password-protected</span>
@@ -522,7 +522,7 @@ function requestAccess(){
   document.getElementById('emailSubject').textContent = 'Access request — Plans.aero data room';
   document.getElementById('emailBody').innerHTML = `
     <div class="email-meta">
-      <div><b>From:</b> PLANA Due Diligence Bot &lt;dd-bot@plans.aero&gt;</div>
+      <div><b>From:</b> Junkola Due Diligence Bot &lt;dd-bot@junkola.ai&gt;</div>
       <div><b>To:</b> Deal team (any team member can approve)</div>
       <div><b>Subject:</b> Access request — Plans.aero data room</div>
     </div>
@@ -628,7 +628,7 @@ const SEED_FAQ = [
      dd-admin.html reads those params on load and creates a pending card.
 
    INBOUND (dd-admin.html → this file):
-     When PLANA publishes an answer, the notification email's CTA points to:
+     When Junkola publishes an answer, the notification email's CTA points to:
        index.html?answered=1&qid=<id>&q=<question>&a=<answer>&cat=<category>&by=<answerer>
      This file reads those params on load, inserts the Q&A, and opens it.
 
@@ -738,7 +738,7 @@ function sendChat(preset){
       const qid = state.seq++;
       const cat = guessCat(text);
       addAiBubble(`I don't have a verified answer for that yet.
-        <div class="escalate-note"><span class="em-ico">✉</span><div><b>Duc Nguyen and Braden Miller have been notified</b> — I've emailed them your question with a direct link into PLANA. I'll also email <b>you</b> the moment it's answered, and you'll find it waiting in <button class="inline-link" onclick="setInvTab('mine')">My Questions</button> (average response time ~4 hours). <a href="#" onclick="openEscalationEmail('${escapeAttr(text)}', ${qid}, '${escapeAttr(cat)}');return false;" style="color:var(--brand-orange);text-decoration:underline">View the alert email they received →</a></div></div>`, null);
+        <div class="escalate-note"><span class="em-ico">✉</span><div><b>Duc Nguyen and Braden Miller have been notified</b> — I've emailed them your question with a direct link into Junkola. I'll also email <b>you</b> the moment it's answered, and you'll find it waiting in <button class="inline-link" onclick="setInvTab('mine')">My Questions</button> (average response time ~4 hours). <a href="#" onclick="openEscalationEmail('${escapeAttr(text)}', ${qid}, '${escapeAttr(cat)}');return false;" style="color:var(--brand-orange);text-decoration:underline">View the alert email they received →</a></div></div>`, null);
       state.pending.push({ id: qid, q:text, cat });
       state.myQuestions.push({ id: qid, q:text, status:'pending', faqId:null });
       renderMyQuestions();
@@ -861,7 +861,7 @@ function openEscalationEmail(question, qid, cat){
   document.getElementById('emailSubject').textContent = 'New DD question needs an answer';
   document.getElementById('emailBody').innerHTML = `
     <div class="email-meta">
-      <div><b>From:</b> PLANA Due Diligence Bot &lt;dd-bot@plans.aero&gt;</div>
+      <div><b>From:</b> Junkola Due Diligence Bot &lt;dd-bot@junkola.ai&gt;</div>
       <div><b>To:</b> Duc Nguyen, Braden Miller</div>
       <div><b>Subject:</b> New DD question needs an answer — Philippe Investor</div>
     </div>
@@ -870,7 +870,7 @@ function openEscalationEmail(question, qid, cat){
       <p>An investor asked a question our data room, economic model, and budgets don't currently answer:</p>
       <p style="border-left:2px solid var(--brand-orange);padding-left:12px;color:var(--muted)">"${question}"</p>
       <p>Please add a verified answer so it's ready next time it's asked — and so Philippe gets notified automatically.</p>
-      <a class="btn btn-primary email-cta" href="${adminUrl}" target="_blank">Open in PLANA →</a>
+      <a class="btn btn-primary email-cta" href="${adminUrl}" target="_blank">Open in Junkola →</a>
     </div>`;
   document.getElementById('scrim').classList.add('show');
   document.getElementById('emailOvl').classList.add('show');

@@ -6,7 +6,7 @@ Author: Scout | For: Vu
 
 ---
 
-## 1. Acquisition Doc Studio — real PLANA mark in the sidebar
+## 1. Acquisition Doc Studio — real Junkola mark in the sidebar
 
 **File:** `acquisition/acquisition-doc-studio.html`
 **Type:** Visual / branding fix

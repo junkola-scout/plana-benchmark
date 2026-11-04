@@ -1,4 +1,4 @@
-/* PLANA Brain service worker — network-first with offline cache fallback.
+/* Hyperspace service worker — network-first with offline cache fallback.
    Network-first keeps testers on the newest committed build; the cache only
    answers when the network can't. Bump CACHE on breaking asset renames. */
 const CACHE = "plana-brain-v2";

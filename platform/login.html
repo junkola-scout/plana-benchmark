@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign in to PLANA Hyperspace</title>
-<meta name="description" content="PLANA Hyperspace turns company work into searchable, grounded intelligence.">
-<link rel="icon" type="image/svg+xml" href="logo.svg">
+<title>Sign in to Junkola Hyperspace</title>
+<meta name="description" content="Junkola Hyperspace turns company work into searchable, grounded intelligence.">
+<link rel="icon" type="image/svg+xml" href="../shared/junkola-mark.svg">
 
 <!--
   =========================================================================
-  PLANA Hyperspace — Login v2 (design working copy)
+  Junkola Hyperspace — Login v2 (design working copy)
 
   BASELINE: captured 2026-09-04 from the live page
   https://platform.pioneerxity.ai/en/login
@@ -21,28 +21,28 @@
   CONVENTIONS
   · Class names are the same Tailwind v4 utilities Vu's platform uses, so
     changes here map 1:1 onto his React components.
-  · Brand orange #e56203 · accent text #f18a42
-  · Gradient ramp (arrows + primary buttons): #e50602 → #e56203 → #f5a623
-  · Page background #0c0c0d · card surface #171719/90
-  · Font: Geist (loaded from Google Fonts here; self-hosted on the platform)
-  · Assets: logo.svg (mark, inverted to white) and
-    Logo-hyperspace-white.png (card wordmark) live in this folder — same filenames as the live site.
+  · Brand orange #F45209 · accent text #F7C21B
+  · Gradient ramp (arrows + primary buttons): #E0341C → #F45209 → #F7C21B
+  · Page background #10182A · card surface #161F34/90
+  · Font: Libre Franklin (Google Fonts) — brand typeface per junkola.ai
+  · Assets: ../shared/junkola-mark.svg (mark) and
+    ../shared/junkola-wordmark-white.svg (card wordmark) live in this folder — same filenames as the live site.
   · Links point at the live platform so the prototype stays clickable.
   =========================================================================
 -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <style>
 /* ───────────────────────────── Tokens ───────────────────────────── */
 :root{
-  --font-geist-sans:"Geist","Geist Fallback",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-geist-sans:"Libre Franklin",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --default-font-family:var(--font-geist-sans);
 
   --color-black:#000;
-  --color-white:#fff;
+  --color-white:#F2E9D7;
   --spacing:.25rem;
   --container-md:28rem;
   --container-lg:32rem;
@@ -68,7 +68,7 @@
   /* shadcn theme vars still referenced by the button/input primitives */
   --background:#fff;
   --foreground:#0a0a0a;
-  --primary:#171717;
+  --primary:#161F34;
   --primary-foreground:#fafafa;
   --border:#e5e5e5;
   --ring:#a1a1a1;
@@ -135,7 +135,7 @@ button,input,select,optgroup,textarea{font:inherit;letter-spacing:inherit;color:
 button{appearance:button}
 [hidden]:where(:not([hidden="until-found"])){display:none!important}
 *{border-color:var(--border);outline-color:var(--ring)}
-html,body{background:#0c0c0d}
+html,body{background:#10182A}
 body{color:var(--foreground);font-family:var(--font-geist-sans)}
 .antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 
@@ -215,13 +215,13 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
 .rounded-md{border-radius:calc(var(--radius) - 2px)}
 .border{border-style:var(--tw-border-style);border-width:1px}
 .border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}
-.border-\[\#e56203\]\/25{border-color:rgba(229,98,3,.25)}
+.border-\[\#e56203\]\/25{border-color:rgba(244,82,9,.25)}
 .border-white\/10{border-color:rgba(255,255,255,.1)}
-.bg-\[\#0c0c0d\]{background-color:#0c0c0d}
-.bg-\[\#171719\]\/90{background-color:rgba(23,23,25,.9)}
-.bg-\[\#e56203\]{background-color:#e56203}
-.bg-\[\#e56203\]\/\[0\.05\]{background-color:rgba(229,98,3,.05)}
-.bg-\[\#e56203\]\/\[0\.08\]{background-color:rgba(229,98,3,.08)}
+.bg-\[\#0c0c0d\]{background-color:#10182A}
+.bg-\[\#171719\]\/90{background-color:rgba(22,31,52,.9)}
+.bg-\[\#e56203\]{background-color:#F45209}
+.bg-\[\#e56203\]\/\[0\.05\]{background-color:rgba(244,82,9,.05)}
+.bg-\[\#e56203\]\/\[0\.08\]{background-color:rgba(244,82,9,.08)}
 .bg-white\/\[0\.04\]{background-color:rgba(255,255,255,.04)}
 .bg-white\/\[0\.025\]{background-color:rgba(255,255,255,.025)}
 .bg-white\/\[0\.035\]{background-color:rgba(255,255,255,.035)}
@@ -262,7 +262,7 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
 .tracking-tight{--tw-tracking:var(--tracking-tight);letter-spacing:var(--tracking-tight)}
 .whitespace-nowrap{white-space:nowrap}
 .\!text-white{color:var(--color-white)!important}
-.text-\[\#f18a42\]{color:#f18a42}
+.text-\[\#f18a42\]{color:#F7C21B}
 .text-primary-foreground{color:var(--primary-foreground)}
 .text-white{color:var(--color-white)}
 .text-white\/25{color:rgba(255,255,255,.25)}
@@ -305,18 +305,18 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
 .dark\:aria-invalid\:ring-destructive\/40:is(.dark *)[aria-invalid="true"]{--tw-ring-color:color-mix(in oklab,var(--destructive) 40%,transparent)}
 
 @media (hover:hover){
-  .hover\:border-\[\#e56203\]\/50:hover{border-color:rgba(229,98,3,.5)}
-  .hover\:bg-\[\#e56203\]\/10:hover{background-color:rgba(229,98,3,.1)}
+  .hover\:border-\[\#e56203\]\/50:hover{border-color:rgba(244,82,9,.5)}
+  .hover\:bg-\[\#e56203\]\/10:hover{background-color:rgba(244,82,9,.1)}
   .hover\:bg-\[\#f07819\]:hover{background-color:#f07819}
   .hover\:text-white:hover{color:var(--color-white)}
   .hover\:text-white\/55:hover{color:rgba(255,255,255,.55)}
   .hover\:text-white\/60:hover{color:rgba(255,255,255,.6)}
   .hover\:underline:hover{text-decoration-line:underline}
 }
-.focus-visible\:border-\[\#e56203\]\/70:focus-visible{border-color:rgba(229,98,3,.7)}
+.focus-visible\:border-\[\#e56203\]\/70:focus-visible{border-color:rgba(244,82,9,.7)}
 .focus-visible\:border-ring:focus-visible{border-color:var(--ring)}
 .focus-visible\:ring-\[3px\]:focus-visible{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}
-.focus-visible\:ring-\[\#e56203\]\/25:focus-visible{--tw-ring-color:rgba(229,98,3,.25)}
+.focus-visible\:ring-\[\#e56203\]\/25:focus-visible{--tw-ring-color:rgba(244,82,9,.25)}
 .focus-visible\:ring-ring\/50:focus-visible{--tw-ring-color:color-mix(in oklab,var(--ring) 50%,transparent)}
 .disabled\:pointer-events-none:disabled{pointer-events:none}
 .disabled\:cursor-not-allowed:disabled{cursor:not-allowed}
@@ -350,7 +350,7 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
 
 /* ───────────────────────────── v2: Capture → Extract → Track ─────────────────────────────
    Replaces the "Workspace intelligence" badge / headline / feature cards.
-   Brand palette: red #e50602 → orange #e56203 → amber #f5a623, on the #0c0c0d ground.
+   Brand palette: red #E0341C → orange #F45209 → amber #F7C21B, on the #10182A ground.
    The arrows echo the slide artwork (speed lines + gradient chevron, black italic label)
    but sit on the dark theme; lists use the same "➔" bullets as the slide.               */
 .ce-wrap{max-width:var(--container-xl);width:100%}
@@ -372,32 +372,32 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
 /* arrow = speed lines + chevron */
 .ce-arrow{display:flex;align-items:center;gap:6px;height:4.25rem;max-width:17rem}
 .ce-lines{display:flex;align-items:stretch;gap:5px;height:56%}
-.ce-lines i{display:block;width:5px;border-radius:2px;background:linear-gradient(180deg,#e50602 0%,#e56203 100%)}
+.ce-lines i{display:block;width:5px;border-radius:2px;background:linear-gradient(180deg,#E0341C 0%,#F45209 100%)}
 .ce-lines i:first-child{width:3px;opacity:.75}
 .ce-chevron{
   position:relative;flex:1;height:100%;min-width:0;
   display:flex;align-items:center;
   padding-left:calc(var(--spacing)*3);
   clip-path:polygon(0 22%,72% 22%,72% 0,100% 50%,72% 100%,72% 78%,0 78%);
-  background:linear-gradient(115deg,#e50602 0%,#e56203 38%,#f5a623 100%);
+  background:linear-gradient(115deg,#E0341C 0%,#F45209 38%,#F7C21B 100%);
 }
-.ce-arrow{filter:drop-shadow(0 10px 28px rgba(229,98,3,.22))}
+.ce-arrow{filter:drop-shadow(0 10px 28px rgba(244,82,9,.22))}
 .ce-label{
   font-size:1.0625rem;line-height:1;
   font-weight:var(--font-weight-black);font-style:italic;
   text-transform:uppercase;letter-spacing:-.02em;
-  color:#0c0c0d;white-space:nowrap;
+  color:#10182A;white-space:nowrap;
 }
 
 /* shared gradient button treatment — same ramp as the arrows (Login + Watch the intro) */
 .hv-grad{
-  background-color:#e56203;
-  background-image:linear-gradient(115deg,#e50602 0%,#e56203 38%,#f5a623 100%);
-  color:#0c0c0d;
-  box-shadow:0 10px 28px -10px rgba(229,98,3,.55);
+  background-color:#F45209;
+  background-image:linear-gradient(115deg,#E0341C 0%,#F45209 38%,#F7C21B 100%);
+  color:#10182A;
+  box-shadow:0 10px 28px -10px rgba(244,82,9,.55);
   transition:filter .15s,box-shadow .15s,transform .15s;
 }
-.hv-grad:hover{filter:brightness(1.08) saturate(1.05);box-shadow:0 14px 32px -10px rgba(229,98,3,.7)}
+.hv-grad:hover{filter:brightness(1.08) saturate(1.05);box-shadow:0 14px 32px -10px rgba(244,82,9,.7)}
 .hv-grad:active{filter:brightness(.97)}
 
 /* copy under each arrow */
@@ -415,7 +415,7 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
 }
 .ce-list li::before{
   content:"➔";position:absolute;left:0;top:0;
-  color:#f18a42;font-size:.9em;line-height:1.5;
+  color:#F7C21B;font-size:.9em;line-height:1.5;
 }
 
 /* responsive: three columns from the sm breakpoint up */
@@ -444,29 +444,29 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
 .hv-panel{
   position:relative;width:100%;max-width:60rem;
   border:1px solid rgba(255,255,255,.1);border-radius:var(--radius-3xl);
-  background:rgba(23,23,25,.96);
-  box-shadow:0 25px 50px -12px rgba(0,0,0,.6),0 0 0 1px rgba(229,98,3,.08),0 30px 90px -20px rgba(229,98,3,.25);
+  background:rgba(22,31,52,.96);
+  box-shadow:0 25px 50px -12px rgba(0,0,0,.6),0 0 0 1px rgba(244,82,9,.08),0 30px 90px -20px rgba(244,82,9,.25);
   padding:calc(var(--spacing)*5);
   animation:hv-in .32s cubic-bezier(.2,.8,.2,1) both;
 }
 @keyframes hv-in{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.hv-panel{animation:none}}
 .hv-head{display:flex;align-items:flex-start;justify-content:space-between;gap:calc(var(--spacing)*4);margin-bottom:calc(var(--spacing)*4)}
-.hv-eyebrow{display:inline-flex;align-items:center;gap:calc(var(--spacing)*2);border:1px solid rgba(229,98,3,.25);background:rgba(229,98,3,.08);border-radius:999px;padding:calc(var(--spacing)*1.5) calc(var(--spacing)*3);font-size:10px;font-weight:var(--font-weight-bold);text-transform:uppercase;letter-spacing:.18em;color:#f18a42}
-.hv-eyebrow i{display:block;width:6px;height:6px;border-radius:999px;background:#e56203}
+.hv-eyebrow{display:inline-flex;align-items:center;gap:calc(var(--spacing)*2);border:1px solid rgba(244,82,9,.25);background:rgba(244,82,9,.08);border-radius:999px;padding:calc(var(--spacing)*1.5) calc(var(--spacing)*3);font-size:10px;font-weight:var(--font-weight-bold);text-transform:uppercase;letter-spacing:.18em;color:#F7C21B}
+.hv-eyebrow i{display:block;width:6px;height:6px;border-radius:999px;background:#F45209}
 .hv-title{margin-top:calc(var(--spacing)*3);font-size:1.375rem;line-height:1.15;font-weight:var(--font-weight-black);letter-spacing:-.04em;color:var(--color-white)}
 .hv-sub{margin-top:calc(var(--spacing)*1.5);font-size:var(--text-sm);line-height:1.5;color:rgba(255,255,255,.45)}
 .hv-close{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.7);cursor:pointer;transition:color .15s,background-color .15s,border-color .15s}
-.hv-close:hover{color:#fff;border-color:rgba(229,98,3,.5);background:rgba(229,98,3,.1)}
-.hv-close:focus-visible,.hv-unmute:focus-visible,.hv-skip:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(229,98,3,.4)}
+.hv-close:hover{color:#F2E9D7;border-color:rgba(244,82,9,.5);background:rgba(244,82,9,.1)}
+.hv-close:focus-visible,.hv-unmute:focus-visible,.hv-skip:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(244,82,9,.4)}
 .hv-stage{position:relative;aspect-ratio:16/9;border-radius:var(--radius-2xl);overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.08)}
 .hv-stage iframe{display:block;width:100%;height:100%;border:0;background:#000}
 .hv-unmute{
   position:absolute;left:calc(var(--spacing)*4);top:calc(var(--spacing)*4);
   display:inline-flex;align-items:center;gap:calc(var(--spacing)*2);
   height:2.75rem;padding:0 calc(var(--spacing)*4);border-radius:var(--radius);
-  background:#e56203;color:#fff;font-size:var(--text-sm);font-weight:var(--font-weight-semibold);
-  border:0;cursor:pointer;box-shadow:0 10px 30px -10px rgba(229,98,3,.7);
+  background:#F45209;color:#F2E9D7;font-size:var(--text-sm);font-weight:var(--font-weight-semibold);
+  border:0;cursor:pointer;box-shadow:0 10px 30px -10px rgba(244,82,9,.7);
   transition:background-color .15s,opacity .2s,transform .2s;
 }
 .hv-unmute:hover{background:#f07819}
@@ -475,7 +475,7 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
 .hv-foot{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--spacing)*4);margin-top:calc(var(--spacing)*4)}
 .hv-meta{font-size:11px;color:rgba(255,255,255,.25)}
 .hv-skip{display:inline-flex;align-items:center;gap:calc(var(--spacing)*1.5);background:none;border:0;cursor:pointer;font-size:var(--text-sm);font-weight:var(--font-weight-medium);color:rgba(255,255,255,.55);border-radius:var(--radius);padding:calc(var(--spacing)*2) calc(var(--spacing)*1);transition:color .15s}
-.hv-skip:hover{color:#f18a42}
+.hv-skip:hover{color:#F7C21B}
 .hv-skip svg{width:.875rem;height:.875rem}
 body.hv-open{overflow:hidden}
 
@@ -485,17 +485,17 @@ body.hv-open{overflow:hidden}
   display:inline-flex;align-items:center;gap:calc(var(--spacing)*2.5);
   height:3rem;padding:0 calc(var(--spacing)*5) 0 calc(var(--spacing)*4);
   border:0;border-radius:999px;cursor:pointer;
-  background-color:#e56203;
-  background-image:linear-gradient(115deg,#e50602 0%,#e56203 38%,#f5a623 100%);
-  color:#0c0c0d;
+  background-color:#F45209;
+  background-image:linear-gradient(115deg,#E0341C 0%,#F45209 38%,#F7C21B 100%);
+  color:#10182A;
   font-family:inherit;font-size:var(--text-sm);font-weight:var(--font-weight-bold);letter-spacing:-.01em;white-space:nowrap;
-  box-shadow:0 12px 32px -8px rgba(229,98,3,.55),0 2px 6px rgba(0,0,0,.35);
+  box-shadow:0 12px 32px -8px rgba(244,82,9,.55),0 2px 6px rgba(0,0,0,.35);
   transition:filter .15s,transform .15s,box-shadow .15s,opacity .2s;
 }
-.hv-fab:hover{filter:brightness(1.08) saturate(1.05);transform:translateY(-1px);box-shadow:0 16px 36px -8px rgba(229,98,3,.65),0 2px 6px rgba(0,0,0,.35)}
+.hv-fab:hover{filter:brightness(1.08) saturate(1.05);transform:translateY(-1px);box-shadow:0 16px 36px -8px rgba(244,82,9,.65),0 2px 6px rgba(0,0,0,.35)}
 .hv-fab:active{transform:translateY(0)}
-.hv-fab:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(229,98,3,.4),0 12px 32px -8px rgba(229,98,3,.55)}
-.hv-fab-icon{display:inline-flex;align-items:center;justify-content:center;width:1.75rem;height:1.75rem;border-radius:999px;background:rgba(12,12,13,.85);color:#f5a623}
+.hv-fab:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(244,82,9,.4),0 12px 32px -8px rgba(244,82,9,.55)}
+.hv-fab-icon{display:inline-flex;align-items:center;justify-content:center;width:1.75rem;height:1.75rem;border-radius:999px;background:rgba(12,12,13,.85);color:#F7C21B}
 .hv-fab-icon svg{width:.8rem;height:.8rem;margin-left:1px;fill:currentColor}
 body.hv-open .hv-fab{opacity:0;pointer-events:none}
 @media (max-width:39.99rem){
@@ -518,9 +518,9 @@ body.hv-open .hv-fab{opacity:0;pointer-events:none}
 
     <!-- brand bar (mobile / tablet only; desktop shows it inside the left column) -->
     <div class="relative z-10 px-6 pt-7 sm:px-10 lg:hidden">
-      <a href="https://platform.pioneerxity.ai/" class="flex w-fit items-center gap-2.5" aria-label="PLANA Hyperspace home">
-        <img src="logo.svg" alt="" class="h-7 w-6 object-contain brightness-0 invert">
-        <span><span class="block text-sm font-bold tracking-tight text-white">PLANA Hyperspace</span></span>
+      <a href="https://platform.pioneerxity.ai/" class="flex w-fit items-center gap-2.5" aria-label="Junkola Hyperspace home">
+        <img src="../shared/junkola-mark.svg" alt="" class="h-7 w-7 object-contain">
+        <span><span class="block text-sm font-bold tracking-tight text-white">Junkola Hyperspace</span></span>
       </a>
     </div>
 
@@ -529,18 +529,18 @@ body.hv-open .hv-fab{opacity:0;pointer-events:none}
       <!-- ── left / marketing ─────────────────────────────────────────── -->
       <section class="order-2 flex min-h-[31rem] flex-col px-6 py-7 sm:px-10 lg:order-1 lg:min-h-svh lg:px-16 lg:py-10">
         <div class="hidden lg:block">
-          <a href="https://platform.pioneerxity.ai/" class="flex w-fit items-center gap-2.5" aria-label="PLANA Hyperspace home">
-            <img src="logo.svg" alt="" class="h-7 w-6 object-contain brightness-0 invert">
-            <span><span class="block text-sm font-bold tracking-tight text-white">PLANA Hyperspace</span></span>
+          <a href="https://platform.pioneerxity.ai/" class="flex w-fit items-center gap-2.5" aria-label="Junkola Hyperspace home">
+            <img src="../shared/junkola-mark.svg" alt="" class="h-7 w-7 object-contain">
+            <span><span class="block text-sm font-bold tracking-tight text-white">Junkola Hyperspace</span></span>
           </a>
         </div>
 
         <div class="flex flex-1 items-center py-14 lg:py-0">
           <div class="ce-wrap">
             <!-- ── Capture → Extract → Track ─────────────────────────────── -->
-            <h1 class="ce-headline">Accelerating through the barriers that classically impede aerospace development.</h1>
+            <h1 class="ce-headline">Chaos in, clarity out.</h1>
 
-            <ol class="ce-flow" aria-label="How PLANA Hyperspace works">
+            <ol class="ce-flow" aria-label="How Junkola Hyperspace works">
 
               <li class="ce-step">
                 <div class="ce-arrow" aria-hidden="true">
@@ -595,13 +595,13 @@ body.hv-open .hv-fab{opacity:0;pointer-events:none}
       <section class="order-1 flex items-center border-b border-white/10 px-6 py-10 sm:px-10 lg:order-2 lg:border-b-0 lg:border-l lg:border-t-0 lg:px-16">
         <div class="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-[#171719]/90 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-9">
 
-          <div class="mb-4 flex items-center" aria-label="PLANA">
-            <img src="Logo-hyperspace-white.png" alt="PLANA" class="h-12 w-auto max-w-[210px] object-contain object-left">
+          <div class="mb-4 flex items-center" aria-label="Junkola">
+            <img src="../shared/junkola-wordmark-white.svg" alt="Junkola" class="h-12 w-auto max-w-[210px] object-contain object-left">
           </div>
 
           <div class="mb-8">
-            <h2 class="mt-2 text-3xl font-black tracking-[-0.05em] text-white">Sign in to PLANA Hyperspace</h2>
-            <p class="mt-3 text-sm leading-6 text-white/45">Continue to your workspace intelligence.</p>
+            <h2 class="mt-2 text-3xl font-black tracking-[-0.05em] text-white">Sign in to Junkola Hyperspace</h2>
+            <p class="mt-3 text-sm leading-6 text-white/45">Communication clutter into company awareness.</p>
           </div>
 
           <form class="flex flex-col gap-6" onsubmit="return false">
@@ -653,7 +653,7 @@ body.hv-open .hv-fab{opacity:0;pointer-events:none}
     <div class="hv-head">
       <div>
         <span class="hv-eyebrow"><i></i>Hyperspace Beta</span>
-        <h2 class="hv-title" id="introTitle">Welcome to PLANA Hyperspace</h2>
+        <h2 class="hv-title" id="introTitle">Welcome to Junkola Hyperspace</h2>
         <p class="hv-sub" id="introSub">A quick look at what the beta does before you sign in.</p>
       </div>
       <button type="button" class="hv-close" data-hv-close aria-label="Close intro video">
