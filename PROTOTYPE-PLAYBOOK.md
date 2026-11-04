@@ -65,9 +65,10 @@ Rules:
 
 ## Known gaps / TODO
 
-- `document-manager.html` links to `../platform/tutorial.html` which doesn't exist yet.
-- Logo SVGs are vector stand-ins drawn in the lockup's style; Scout's real mark is raster
-  (brush drawing). Replace `shared/junkola-wordmark-*.svg` and `junkola-mark.svg` with the
+- `platform/login.html` still links Terms / Privacy / Tutorial to `platform.pioneerxity.ai` (PLANA-era
+  URLs). Repoint when Junkola has its own pages.
+- Logo SVGs are vector stand-ins drawn in the lockup's style (Scout: fine for now). His real mark is
+  raster (brush drawing). When ready, replace `shared/junkola-wordmark-*.svg` and `junkola-mark.svg` with the
   real assets (keep filenames, or update the ~12 references).
 - Only `document-manager.html` and new pages link `shared/junkola.css`; the older pages still
   carry inline token copies (already re-tokened to Junkola values). Migrate when touching them.
