@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Junkola Hyperspace — Capture (mobile)</title>
+<link rel="icon" href="../shared/junkola-mark.svg">
+<link rel="stylesheet" href="../shared/junkola.css">
+<style>
+/* ==========================================================================
+   Capture (mobile) — field ingestion channel for Junkola Hyperspace.
+   Desktop: a phone frame + a screen rail so the prototype is reviewable.
+   ≤ 430px: the phone fills the viewport and behaves like the real app.
+   ========================================================================== */
+:root{--ph-w:390px;--ph-h:844px;--ph-r:46px;--safe-top:54px;--safe-bot:28px}
+body{display:flex;min-height:100vh}
+
+/* ----- review chrome (desktop only) ----- */
+.rail{width:264px;flex-shrink:0;border-right:1px solid var(--line);background:var(--grad-sidebar);
+  padding:18px 16px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.rail img{height:30px;display:block;margin-left:-4px}
+.rail .ws-sub{margin-bottom:18px}
+.rail .side-item{font-size:var(--fs-sm)}
+.rail .side-item .num{font-family:var(--font-mono);font-size:var(--fs-micro);color:var(--faint);width:18px}
+.rail .note{margin-top:18px}
+.stage{flex:1;display:grid;place-items:center;padding:28px 20px}
+.stage-cap{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);font-size:var(--fs-xs);color:var(--faint);white-space:nowrap}
+
+/* ----- phone ----- */
+.phone{width:var(--ph-w);height:var(--ph-h);border-radius:var(--ph-r);background:var(--bg);position:relative;overflow:hidden;
+  box-shadow:0 0 0 10px #0A0F1C,0 0 0 12px var(--line-strong),0 40px 90px rgba(0,0,0,.6);flex-shrink:0}
+.phone .island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:118px;height:34px;border-radius:20px;background:#000;z-index:5}
+.phone .clock{position:absolute;top:18px;left:30px;font-size:15px;font-weight:600;letter-spacing:-.01em;z-index:5}
+.phone .cell{position:absolute;top:19px;right:30px;font-size:11px;z-index:5;display:flex;gap:5px;align-items:center;font-family:var(--font-mono)}
+.phone .cell i{display:inline-block;width:22px;height:10px;border:1.5px solid var(--text);border-radius:3px;position:relative}
+.phone .cell i::after{content:"";position:absolute;inset:1.5px;right:5px;background:var(--text);border-radius:1px}
+.phone .homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:var(--text);opacity:.85;z-index:5}
+
+.screen{position:absolute;inset:0;display:none;flex-direction:column;padding-top:var(--safe-top);overflow:hidden}
+.screen.on{display:flex;animation:winIn .22s ease both}
+.scroll{flex:1;min-height:0;overflow-y:auto;padding:6px 20px 24px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+
+/* ----- app bar / nav ----- */
+.abar{display:flex;align-items:center;gap:10px;padding:8px 20px 10px;min-height:48px}
+.abar h2{font-size:22px;font-weight:800;letter-spacing:-.01em;flex:1;line-height:1.15}
+.abar .back{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--raised);color:var(--text);margin-left:-6px}
+.abar .wm{height:26px;width:auto;margin-left:-3px}
+.tabbar{display:flex;border-top:1px solid var(--line);background:var(--bg);padding:8px 6px calc(var(--safe-bot) + 6px)}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--muted);padding:4px 0}
+.tabbar button svg{width:22px;height:22px}
+.tabbar button[aria-current="page"]{color:var(--brand-orange)}
+.fab{position:absolute;right:20px;bottom:calc(var(--safe-bot) + 70px);height:52px;padding:0 20px 0 16px;border-radius:var(--r-pill);
+  background:var(--grad-brand);color:var(--bg);font-weight:800;font-size:var(--fs-lg);display:flex;align-items:center;gap:8px;
+  box-shadow:0 12px 30px rgba(244,82,9,.4);z-index:4}
+.fab svg{width:20px;height:20px}
+
+/* ----- icons ----- */
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ----- sessions list ----- */
+.sec{font-size:var(--fs-label);letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:700;margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.sec .rule{flex:1;height:1px;background:var(--line);margin:0}
+.live-card{background:var(--grad-card);border:1px solid var(--brand-orange);border-radius:var(--r-2xl);padding:14px 16px;position:relative;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(244,82,9,.25),0 14px 40px rgba(0,0,0,.35)}
+.live-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--grad-brand-v)}
+.rec{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-label);font-weight:800;letter-spacing:.08em;color:var(--brand-orange);text-transform:uppercase}
+.rec .dot{width:8px;height:8px;border-radius:50%;background:var(--brand-red);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.sess{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+.sess:last-child{border-bottom:none}
+.sess .when-col{width:46px;flex-shrink:0;text-align:center;border-radius:var(--r-lg);background:var(--raised);padding:6px 0}
+.sess .when-col b{display:block;font-size:17px;font-weight:800;line-height:1.1}
+.sess .when-col span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.sess .t{font-size:var(--fs-lg);font-weight:700;line-height:1.25}
+.sess .s{font-size:var(--fs-xs);color:var(--muted);margin-top:2px}
+.sess .m{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-micro);font-weight:700;border:1px solid var(--line-strong);border-radius:var(--r-pill);padding:2px 8px;color:var(--muted);white-space:nowrap}
+.pill svg{width:11px;height:11px}
+.pill.hot{border-color:var(--brand-orange);color:var(--brand-orange)}
+.pill.ok{border-color:#2A5A42;color:#7FD9A0;background:#17342A}
+.pill.cal{border-color:transparent;background:var(--raised);color:var(--text)}
+.avs{display:inline-flex}
+.avs .avatar{width:22px;height:22px;font-size:9px;border:2px solid var(--bg);margin-left:-7px}
+.avs .avatar:first-child{margin-left:0}
+.avatar.me{background:var(--brand-orange);color:var(--bg)}
+.avatar.b{background:#2E6B8F}
+.avatar.c{background:#6B4E8F}
+.avatar.d{background:#3F7F5B}
+
+/* ----- start session ----- */
+.hero-tag{font-size:var(--fs-micro);font-family:var(--font-mono);letter-spacing:.08em;color:var(--faint)}
+.bigfield{background:var(--raised);border:1px solid var(--line-strong);border-radius:var(--r-2xl);padding:12px 14px;margin-bottom:10px}
+.bigfield label{display:block;font-size:var(--fs-micro);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700;margin-bottom:4px}
+.bigfield .v{font-size:var(--fs-lg);font-weight:700;display:flex;align-items:center;gap:8px}
+.bigfield .v .caret{margin-left:auto}
+.bigfield .sub{font-size:var(--fs-xs);color:var(--muted);margin-top:3px}
+.bigfield.match{border-color:rgba(244,82,9,.5)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.mode{border:1px solid var(--line-strong);border-radius:var(--r-2xl);padding:14px 12px;text-align:left;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.mode svg{width:22px;height:22px;color:var(--text)}
+.mode b{color:var(--text);font-size:var(--fs-md)}
+.mode small{font-size:var(--fs-xs);line-height:1.4}
+.mode[aria-pressed="true"]{border-color:transparent;background:var(--grad-brand);color:rgba(16,24,42,.8)}
+.mode[aria-pressed="true"] b,.mode[aria-pressed="true"] svg{color:var(--bg)}
+.cta{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:56px;border-radius:var(--r-2xl);
+  background:var(--grad-brand);color:var(--bg);font-weight:800;font-size:17px;box-shadow:0 12px 30px rgba(244,82,9,.35)}
+.cta svg{width:22px;height:22px}
+.cta.secondary{background:var(--raised);color:var(--text);box-shadow:none;border:1px solid var(--line-strong);font-weight:700}
+.cta.cream{background:var(--grad-primary-btn);box-shadow:none}
+.foot{padding:10px 20px calc(var(--safe-bot) + 12px);display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,transparent,var(--bg) 30%)}
+.whohere{display:flex;align-items:center;gap:10px;padding:10px 0}
+.whohere .avs .avatar{width:30px;height:30px;font-size:11px}
+.whohere .txt{flex:1;font-size:var(--fs-sm);color:var(--muted);line-height:1.4}
+.whohere .txt b{color:var(--text);display:block;font-size:var(--fs-base)}
+
+/* ----- live session ----- */
+.livehead{padding:4px 20px 10px;display:flex;align-items:center;gap:10px}
+.livehead .serial{font-size:var(--fs-micro)}
+.livehead .t{font-size:var(--fs-lg);font-weight:800;line-height:1.2;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timer{font-family:var(--font-mono);font-size:34px;font-weight:600;letter-spacing:-.02em;line-height:1;text-align:center;margin-top:8px;font-variant-numeric:tabular-nums}
+.timer small{display:block;font-family:var(--font-sans);font-size:var(--fs-xs);color:var(--muted);margin-top:6px;letter-spacing:.02em;font-weight:500}
+.wave{display:flex;align-items:center;justify-content:center;gap:3px;height:54px;margin:14px 0 6px}
+.wave i{display:block;width:3px;border-radius:2px;background:var(--brand-orange);height:var(--h,20%);animation:wv 1.1s ease-in-out infinite;animation-delay:var(--d,0s);opacity:.9}
+.wave i:nth-child(odd){background:var(--brand-amber)}
+@keyframes wv{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1.1)}}
+.devices{display:flex;align-items:center;justify-content:center;gap:8px;font-size:var(--fs-xs);color:var(--muted);margin-bottom:8px}
+.devices .avs .avatar{width:20px;height:20px;font-size:8px}
+.tx{border:1px solid var(--line);border-radius:var(--r-2xl);background:var(--surface);padding:12px 14px;margin:8px 0}
+.tx .h{display:flex;align-items:center;gap:7px;font-size:var(--fs-micro);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:8px}
+.tx .h .spinner{width:10px;height:10px;border-width:1.5px}
+.line{display:flex;gap:9px;font-size:var(--fs-sm);line-height:1.5;color:var(--muted);margin-bottom:7px}
+.line .ts{font-family:var(--font-mono);font-size:var(--fs-micro);color:var(--faint);padding-top:3px;flex-shrink:0;width:38px}
+.line .who{color:var(--text);font-weight:700}
+.line.now{color:var(--text)}
+.line.now .cur{display:inline-block;width:2px;height:12px;background:var(--brand-orange);vertical-align:-2px;margin-left:2px;animation:pulse 1s steps(2) infinite}
+.line.moment{background:rgba(244,82,9,.08);border-left:2px solid var(--brand-orange);padding:6px 8px;margin-left:-8px;border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--text)}
+.line.moment .ts{color:var(--brand-orange)}
+.strip{display:flex;gap:8px;overflow-x:auto;padding:4px 20px 6px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.thumb{width:74px;height:74px;border-radius:var(--r-lg);flex-shrink:0;position:relative;overflow:hidden;border:1px solid var(--line-strong);background:var(--raised)}
+.thumb.img{background:linear-gradient(135deg,#3C4A66,#1C2640)}
+.thumb.img.a{background:linear-gradient(160deg,#5A4A3A 0%,#2A2A33 60%,#1C2640 100%)}
+.thumb.img.b{background:linear-gradient(200deg,#2E6B8F 0%,#1B3550 55%,#10182A 100%)}
+.thumb.img.c{background:radial-gradient(circle at 30% 30%,#8A6C3C,#2A2A33 60%)}
+.thumb.img.d{background:linear-gradient(120deg,#E9DEC5 0%,#B4AFA3 40%,#3A4152 41%,#222D48 100%)}
+.thumb.vid::after{content:"▶";position:absolute;inset:0;display:grid;place-items:center;font-size:18px;color:var(--text);text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.thumb.doc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:var(--fs-micro);font-weight:700}
+.thumb.doc svg{width:22px;height:22px;color:var(--text)}
+.thumb .ts{position:absolute;left:4px;bottom:4px;font-family:var(--font-mono);font-size:9px;font-weight:600;background:rgba(16,24,42,.85);color:var(--text);padding:1px 4px;border-radius:3px}
+.thumb .by{position:absolute;right:3px;top:3px}
+.thumb .by .avatar{width:16px;height:16px;font-size:7px;border:1.5px solid var(--bg)}
+.thumb .up{position:absolute;inset:0;background:rgba(16,24,42,.55);display:grid;place-items:center}
+.thumb .up .spinner{width:18px;height:18px}
+.thumb.add{border-style:dashed;display:grid;place-items:center;color:var(--muted);font-size:22px}
+.capbar{display:flex;justify-content:space-around;align-items:flex-end;padding:8px 14px calc(var(--safe-bot) + 10px);border-top:1px solid var(--line);background:var(--bg)}
+.capbtn{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--muted);width:60px}
+.capbtn .ring{width:48px;height:48px;border-radius:50%;background:var(--raised);border:1px solid var(--line-strong);display:grid;place-items:center;color:var(--text)}
+.capbtn .ring svg{width:21px;height:21px}
+.capbtn.stop .ring{width:60px;height:60px;background:var(--brand-red);border-color:transparent;color:var(--text)}
+.capbtn.stop .ring::before{content:"";width:20px;height:20px;border-radius:4px;background:var(--text)}
+.capbtn.stop{color:var(--text)}
+.capbtn:hover .ring{border-color:var(--brand-orange)}
+
+/* ----- camera ----- */
+.cam{flex:1;position:relative;background:
+  radial-gradient(600px 300px at 60% 20%,rgba(247,194,27,.08),transparent 60%),
+  linear-gradient(180deg,#2A2A33 0%,#20232E 45%,#121A2E 100%);overflow:hidden}
+.cam .wb{position:absolute;left:24px;right:24px;top:60px;bottom:200px;background:#E9DEC5;border-radius:4px;transform:perspective(900px) rotateY(-6deg) rotateX(2deg);box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.cam .wb i{position:absolute;display:block;height:3px;border-radius:2px;background:#2E6B8F;opacity:.75}
+.cam .wb i:nth-child(1){left:12%;top:18%;width:40%}
+.cam .wb i:nth-child(2){left:12%;top:28%;width:62%;background:#E0341C}
+.cam .wb i:nth-child(3){left:12%;top:38%;width:30%}
+.cam .wb i:nth-child(4){left:50%;top:50%;width:38%;transform:rotate(-25deg)}
+.cam .wb i:nth-child(5){left:14%;top:62%;width:55%;background:#1C2640}
+.cam .wb i:nth-child(6){left:14%;top:72%;width:22%;background:#1C2640}
+.cam .wb u{position:absolute;left:56%;top:12%;width:34%;height:30%;border:3px solid #E0341C;border-radius:50%;opacity:.8}
+.peg{position:absolute;left:16px;right:16px;top:14px;display:flex;align-items:center;gap:10px;background:rgba(16,24,42,.82);backdrop-filter:blur(8px);
+  border:1px solid rgba(244,82,9,.5);border-radius:var(--r-xl);padding:9px 12px}
+.peg .rec{font-size:10px}
+.peg .txt{flex:1;min-width:0;font-size:var(--fs-xs);color:var(--muted);line-height:1.35}
+.peg .txt b{color:var(--text);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-sm)}
+.peg .tsb{font-family:var(--font-mono);font-size:var(--fs-sm);font-weight:600;color:var(--brand-amber)}
+.camctl{position:absolute;left:0;right:0;bottom:0;padding:16px 24px calc(var(--safe-bot) + 14px);display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(180deg,transparent,rgba(16,24,42,.9) 40%)}
+.shutter{width:76px;height:76px;border-radius:50%;border:4px solid var(--text);display:grid;place-items:center}
+.shutter::before{content:"";width:60px;height:60px;border-radius:50%;background:var(--text)}
+.camctl .sw{width:44px;height:44px;border-radius:50%;background:rgba(242,233,215,.14);display:grid;place-items:center;color:var(--text)}
+.camctl .sw svg{width:20px;height:20px}
+.camctl .last{width:44px;height:44px;border-radius:10px;border:2px solid var(--text);background:linear-gradient(160deg,#5A4A3A,#1C2640)}
+.cammode{position:absolute;left:0;right:0;bottom:120px;display:flex;justify-content:center;gap:18px;font-size:var(--fs-xs);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(242,233,215,.5)}
+.cammode b{color:var(--brand-amber)}
+.camtoast{position:absolute;left:16px;right:16px;bottom:232px;background:var(--surface);border:1px solid var(--success);border-radius:var(--r-xl);padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:var(--sh-toast);font-size:var(--fs-sm)}
+.camtoast .tk{width:26px;height:26px;border-radius:50%;background:#17342A;color:#7FD9A0;display:grid;place-items:center;flex-shrink:0}
+.camtoast .tk svg{width:14px;height:14px}
+.camtoast b{color:var(--text)}
+.camtoast small{display:block;color:var(--muted);font-size:var(--fs-xs)}
+
+/* ----- attach sheet ----- */
+.sheet{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--grad-panel);border-radius:28px 28px 0 0;margin-top:26px;border-top:1px solid var(--line-strong);position:relative}
+.sheet::before{content:"";width:40px;height:5px;border-radius:3px;background:var(--line-strong);position:absolute;top:8px;left:50%;transform:translateX(-50%)}
+.sheet .abar{padding-top:20px}
+.pegline{margin:0 20px 10px;display:flex;align-items:center;gap:8px;font-size:var(--fs-xs);color:var(--muted);background:rgba(244,82,9,.07);border:1px dashed rgba(244,82,9,.5);border-radius:var(--r-lg);padding:8px 10px}
+.pegline b{color:var(--text)}
+.pegline .ts{font-family:var(--font-mono);color:var(--brand-amber);margin-left:auto}
+.segs{display:flex;gap:6px;padding:0 20px 10px}
+.segs button{flex:1;min-height:34px;border-radius:var(--r-pill);border:1px solid var(--line-strong);font-size:var(--fs-sm);font-weight:600;color:var(--muted)}
+.segs button[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:transparent}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:0 20px}
+.cell-img{aspect-ratio:1;border-radius:6px;position:relative;background:linear-gradient(135deg,#3C4A66,#1C2640);overflow:hidden}
+.cell-img.a{background:linear-gradient(160deg,#5A4A3A,#2A2A33 60%,#1C2640)}
+.cell-img.b{background:linear-gradient(200deg,#2E6B8F,#1B3550 55%,#10182A)}
+.cell-img.c{background:radial-gradient(circle at 30% 30%,#8A6C3C,#2A2A33 60%)}
+.cell-img.d{background:linear-gradient(120deg,#E9DEC5,#B4AFA3 40%,#3A4152 41%,#222D48)}
+.cell-img.e{background:linear-gradient(45deg,#3F7F5B,#1C2640)}
+.cell-img.f{background:linear-gradient(135deg,#6B4E8F,#1C2640)}
+.cell-img.g{background:linear-gradient(180deg,#F7C21B 0%,#F45209 40%,#10182A 41%)}
+.cell-img .sel{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;border:2px solid var(--text);background:rgba(16,24,42,.5)}
+.cell-img.on{outline:3px solid var(--brand-orange);outline-offset:-3px}
+.cell-img.on .sel{background:var(--brand-orange);border-color:var(--brand-orange);color:var(--bg);display:grid;place-items:center;font-size:12px;font-weight:800}
+.cell-img .when{position:absolute;left:5px;bottom:5px;font-family:var(--font-mono);font-size:9px;background:rgba(16,24,42,.8);padding:1px 4px;border-radius:3px}
+.cell-img.vid::after{content:"▶ 0:42";position:absolute;right:5px;bottom:5px;font-size:9px;font-family:var(--font-mono);background:rgba(16,24,42,.8);padding:1px 4px;border-radius:3px}
+.filerow{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line)}
+.filerow .fi{width:40px;height:40px;border-radius:var(--r-lg);background:var(--raised);display:grid;place-items:center;color:var(--text);font-size:var(--fs-micro);font-weight:800;font-family:var(--font-mono)}
+.filerow .n{flex:1;min-width:0}
+.filerow .n b{display:block;font-size:var(--fs-base);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filerow .n span{font-size:var(--fs-xs);color:var(--muted)}
+.filerow .sel{width:22px;height:22px;border-radius:50%;border:2px solid var(--line-strong)}
+.filerow.on .sel{background:var(--brand-orange);border-color:var(--brand-orange)}
+.pegopt{margin:12px 20px 0;display:flex;gap:8px}
+.pegopt button{flex:1;border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:8px 10px;text-align:left;font-size:var(--fs-xs);color:var(--muted);line-height:1.35}
+.pegopt button b{display:block;color:var(--text);font-size:var(--fs-sm)}
+.pegopt button[aria-pressed="true"]{border-color:var(--brand-orange);background:rgba(244,82,9,.08)}
+
+/* ----- join ----- */
+.qr{width:208px;height:208px;margin:14px auto 0;background:var(--text);border-radius:var(--r-2xl);padding:14px;display:grid;grid-template-columns:repeat(21,1fr);gap:1px}
+.qr i{display:block;background:var(--bg);border-radius:1px}
+.qr i.o{background:transparent}
+.code{text-align:center;font-family:var(--font-mono);font-size:34px;font-weight:600;letter-spacing:.14em;margin:16px 0 2px}
+.code small{display:block;font-family:var(--font-sans);font-size:var(--fs-xs);color:var(--muted);letter-spacing:.02em;font-weight:500}
+.joined{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.joined:last-child{border-bottom:none}
+.joined .avatar{width:34px;height:34px}
+.joined .n{flex:1}
+.joined .n b{display:block;font-size:var(--fs-base)}
+.joined .n span{font-size:var(--fs-xs);color:var(--muted)}
+.joined .st{font-size:var(--fs-micro);font-weight:700;color:var(--success);display:flex;align-items:center;gap:5px}
+.joined .st.wait{color:var(--muted)}
+.sharerow{display:flex;gap:8px;margin-top:12px}
+.sharerow .btn{flex:1;min-height:40px;border-radius:var(--r-xl)}
+
+/* ----- wrap-up / summary ----- */
+.sum-head{padding:0 20px 8px}
+.sum-head .t{font-size:22px;font-weight:800;line-height:1.15;letter-spacing:-.01em}
+.sum-head .s{font-size:var(--fs-xs);color:var(--muted);margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0 4px}
+.stats .stat{padding:10px 8px;text-align:center}
+.stats .stat .n{font-size:20px}
+.stats .stat .l{font-size:10px;margin-top:2px}
+.sync{display:block;border:1px solid var(--line-strong);border-radius:var(--r-2xl);padding:12px 14px;margin:12px 0 4px;background:var(--surface)}
+.sync .r{display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);color:var(--muted);white-space:normal}
+.sync .r b{color:var(--text)}
+.bar{height:6px;border-radius:3px;background:var(--raised);overflow:hidden;margin:9px 0 6px}
+.bar i{display:block;height:100%;width:72%;background:var(--grad-brand-h);border-radius:3px}
+.tl{position:relative;padding-left:22px;margin-top:6px}
+.tl::before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--line)}
+.ev{position:relative;padding:6px 0 12px}
+.ev::before{content:"";position:absolute;left:-20px;top:11px;width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--brand-orange)}
+.ev.decision::before{background:var(--brand-orange)}
+.ev .ts{font-family:var(--font-mono);font-size:var(--fs-micro);color:var(--brand-amber);font-weight:600}
+.ev .t{font-size:var(--fs-base);font-weight:700;margin-top:2px}
+.ev .s{font-size:var(--fs-xs);color:var(--muted);line-height:1.45;margin-top:2px}
+.ev .assets{display:flex;gap:5px;margin-top:7px;align-items:center}
+.ev .assets .thumb{width:44px;height:44px;border-radius:var(--r-sm)}
+.ev .assets .thumb .ts{display:none}
+.ev .assets .thumb .by .avatar{width:14px;height:14px;font-size:6px}
+.ev .assets .more{font-size:var(--fs-micro);color:var(--muted);font-weight:700}
+.will{border:1px dashed var(--line-strong);border-radius:var(--r-xl);padding:10px 12px;margin-top:8px;font-size:var(--fs-xs);color:var(--muted);line-height:1.5}
+.will b{color:var(--text)}
+.will ul{margin:4px 0 0 16px}
+
+/* ----- asset detail ----- */
+.hero-img{height:300px;background:linear-gradient(160deg,#5A4A3A 0%,#2A2A33 55%,#1C2640 100%);position:relative;margin:0 0 12px}
+.hero-img .wbm{position:absolute;left:14%;right:14%;top:12%;bottom:18%;background:#E9DEC5;border-radius:3px;transform:perspective(700px) rotateY(-5deg)}
+.hero-img .wbm i{position:absolute;display:block;height:3px;border-radius:2px;background:#2E6B8F;opacity:.75}
+.hero-img .wbm i:nth-child(1){left:12%;top:18%;width:40%}
+.hero-img .wbm i:nth-child(2){left:12%;top:28%;width:62%;background:#E0341C}
+.hero-img .wbm i:nth-child(3){left:12%;top:38%;width:30%}
+.hero-img .wbm i:nth-child(4){left:50%;top:50%;width:38%;transform:rotate(-25deg)}
+.hero-img .wbm i:nth-child(5){left:14%;top:62%;width:55%;background:#1C2640}
+.hero-img .wbm u{position:absolute;left:56%;top:12%;width:34%;height:30%;border:3px solid #E0341C;border-radius:50%;opacity:.8}
+.hero-img .sr{position:absolute;left:14px;top:12px}
+.hero-img .serial{background:rgba(16,24,42,.85);padding:3px 7px;border-radius:4px;color:var(--text)}
+.kv{display:grid;grid-template-columns:92px 1fr;gap:6px 12px;font-size:var(--fs-sm);padding:0 20px}
+.kv dt{color:var(--faint);font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding-top:2px}
+.kv dd{color:var(--text)}
+.kv dd .muted{display:block;font-size:var(--fs-xs)}
+.said{margin:14px 20px 0;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--brand-orange);border-radius:var(--r-xl);padding:12px 14px}
+.said .h{font-size:var(--fs-micro);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:6px;display:flex;gap:6px;align-items:center}
+.said .h .ts{font-family:var(--font-mono);color:var(--brand-amber);letter-spacing:0}
+.said p{font-size:var(--fs-sm);line-height:1.55;color:var(--muted)}
+.said p b{color:var(--text)}
+.said .play{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:var(--fs-xs);font-weight:700;color:var(--brand-orange)}
+.linkchips{display:flex;gap:6px;flex-wrap:wrap;padding:12px 20px 0}
+.linkchips .chip{border:1px solid var(--line-strong);color:var(--text);font-weight:600;gap:6px}
+.linkchips .chip .dotc{width:7px;height:7px;border-radius:50%;background:var(--brand-orange)}
+.linkchips .chip.ai{border-style:dashed;color:var(--muted)}
+
+/* ----- mobile: phone fills viewport ----- */
+@media(max-width:430px){
+  body{display:block;background:var(--bg)}
+  .rail,.stage-cap{display:none}
+  .stage{padding:0;display:block}
+  .phone{width:100%;height:100dvh;border-radius:0;box-shadow:none}
+  .phone .island,.phone .clock,.phone .cell,.phone .homebar{display:none}
+  :root{--safe-top:env(safe-area-inset-top,12px);--safe-bot:env(safe-area-inset-bottom,10px)}
+}
+@media(max-height:900px) and (min-width:431px){
+  .stage{padding:16px}
+  .phone{transform:scale(.9);transform-origin:center}
+}
+</style>
+</head>
+<body class="flat">
+
+<!-- icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-vid" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M21 12.5 12.6 21a5 5 0 0 1-7-7l9-9a3.3 3.3 0 0 1 4.7 4.7l-9 9a1.7 1.7 0 0 1-2.4-2.4l8-8"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-4M14 21h1"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 3l9 8M5 10v10h14V10"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3v1a3 3 0 0 0-2 5 3 3 0 0 0 2 5v1a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3zM15 4a3 3 0 0 1 3 3v1a3 3 0 0 1 2 5 3 3 0 0 1-2 5v1a3 3 0 0 1-6 0V7a3 3 0 0 1 3-3z"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></symbol>
+  <symbol id="i-flip" viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 14-4l2 2M20 15a8 8 0 0 1-14 4l-2-2M18 3v4h-4M6 21v-4h4"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+</svg>
+
+<!-- ===================================================== review rail (desktop) -->
+<aside class="rail">
+  <img src="../shared/junkola-wordmark-white.svg" alt="Junkola Hyperspace">
+  <div class="ws-sub">Capture · mobile app</div>
+  <div class="side-label">Screens</div>
+  <button class="side-item" data-go="sessions"><span class="num">01</span>Sessions (home)</button>
+  <button class="side-item" data-go="start"><span class="num">02</span>Start a session</button>
+  <button class="side-item" data-go="live"><span class="num">03</span>Live — recording</button>
+  <button class="side-item" data-go="camera"><span class="num">04</span>Camera — pinned shot</button>
+  <button class="side-item" data-go="attach"><span class="num">05</span>Attach from phone</button>
+  <button class="side-item" data-go="join"><span class="num">06</span>Invite other devices</button>
+  <button class="side-item" data-go="wrap"><span class="num">07</span>Wrap-up &amp; send</button>
+  <button class="side-item" data-go="detail"><span class="num">08</span>Asset in context</button>
+  <div class="note"><span>💡</span><span>Every screen is live — tap through on the phone. The <b>secret sauce</b> is screens 04–08: anything captured by anyone in the room is pegged to the session clock, so the transcript, the photo, and the file all point at the same moment.</span></div>
+  <div class="note mt-2" style="border-color:rgba(244,82,9,.4)"><span>📱</span><span>Open on a real phone (≤430px) and the frame drops away.</span></div>
+</aside>
+
+<!-- ===================================================== stage / phone -->
+<main class="stage">
+<div class="phone" id="phone">
+  <div class="island"></div><div class="clock">9:41</div><div class="cell">5G <i></i></div>
+  <div class="homebar"></div>
+
+  <!-- ===== 01 SESSIONS ===== -->
+  <section class="screen" data-screen="sessions">
+    <div class="abar">
+      <img class="wm" src="../shared/junkola-wordmark-white.svg" alt="Junkola Hyperspace">
+      <span class="push"></span>
+      <button class="avatar me" aria-label="Scout">SU</button>
+    </div>
+    <div class="scroll">
+      <div class="sec">Live now<span class="rule"></span></div>
+      <button class="live-card" data-go="live" style="width:100%;text-align:left">
+        <div class="row"><span class="rec"><span class="dot"></span>Rec · 14:32</span><span class="push serial">S-0147</span></div>
+        <div style="font-size:18px;font-weight:800;margin-top:8px;line-height:1.2">Supplier review — Rivera Composites</div>
+        <div class="row mt-1" style="font-size:var(--fs-xs);color:var(--muted);gap:10px">
+          <span class="avs"><span class="avatar me">SU</span><span class="avatar b">MK</span><span class="avatar c">DT</span></span>
+          3 devices · 7 assets pinned
+          <span class="push pill hot">Open ›</span>
+        </div>
+      </button>
+
+      <div class="sec">Up next · from calendar<span class="rule"></span></div>
+      <div class="sess">
+        <div class="when-col"><b>2:00</b><span>pm</span></div>
+        <div class="grow">
+          <div class="t">Investor update — Northwind Ventures</div>
+          <div class="s">Zoom · 45 min · Duc, Vu, Scout</div>
+          <div class="m"><span class="pill cal"><svg class="i"><use href="#i-cal"/></svg>Matched</span><span class="pill">Engagement · Series A</span></div>
+        </div>
+      </div>
+
+      <div class="sec">Recent<span class="rule"></span></div>
+      <div class="sess" data-go="wrap">
+        <div class="when-col"><b>Tue</b><span>Nov 3</span></div>
+        <div class="grow">
+          <div class="t">Site walk — Hangar 4 layout</div>
+          <div class="s">1h 12m · 4 devices · 23 assets</div>
+          <div class="m"><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>In Hyperspace</span><span class="pill">4 decisions</span><span class="pill">11 action items</span></div>
+        </div>
+      </div>
+      <div class="sess">
+        <div class="when-col"><b>Mon</b><span>Nov 2</span></div>
+        <div class="grow">
+          <div class="t">Weekly sync — Platform team</div>
+          <div class="s">32m · 1 device · 2 assets</div>
+          <div class="m"><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>In Hyperspace</span><span class="pill">6 action items</span></div>
+        </div>
+      </div>
+      <div class="sess">
+        <div class="when-col"><b>Fri</b><span>Oct 30</span></div>
+        <div class="grow">
+          <div class="t">Coffee w/ Peter — intros</div>
+          <div class="s">48m · 1 device · 3 assets</div>
+          <div class="m"><span class="pill hot">2 uploads pending</span></div>
+        </div>
+      </div>
+      <div class="sess">
+        <div class="when-col"><b>Thu</b><span>Oct 29</span></div>
+        <div class="grow">
+          <div class="t">Lunch — FavaJava packaging vendor</div>
+          <div class="s">Notes only · 5 photos</div>
+          <div class="m"><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>In Hyperspace</span></div>
+        </div>
+      </div>
+      <div style="height:80px"></div>
+    </div>
+    <button class="fab" data-go="start"><svg class="i"><use href="#i-mic"/></svg>Start session</button>
+    <nav class="tabbar">
+      <button aria-current="page"><svg class="i"><use href="#i-home"/></svg>Sessions</button>
+      <button data-go="join"><svg class="i"><use href="#i-qr"/></svg>Join</button>
+      <button data-go="attach"><svg class="i"><use href="#i-up"/></svg>Upload</button>
+      <button><svg class="i"><use href="#i-brain"/></svg>Hyperspace</button>
+    </nav>
+  </section>
+
+  <!-- ===== 02 START ===== -->
+  <section class="screen" data-screen="start">
+    <div class="abar"><button class="back" data-go="sessions"><svg class="i"><use href="#i-back"/></svg></button><h2>New session</h2><span class="hero-tag">S-0148</span></div>
+    <div class="scroll">
+      <div class="bigfield match">
+        <label>Title · matched to your calendar</label>
+        <div class="v"><svg class="i" style="color:var(--brand-orange)"><use href="#i-cal"/></svg>Supplier review — Rivera Composites<span class="caret">▾</span></div>
+        <div class="sub">Now · 1:00–2:00 pm · Rivera plant, Bldg C · 3 invitees</div>
+      </div>
+      <div class="bigfield">
+        <label>Engagement</label>
+        <div class="v">Rivera Composites · Supplier qualification<span class="caret">▾</span></div>
+        <div class="sub">Assets and transcript will file under this engagement in Hyperspace</div>
+      </div>
+      <div class="modes">
+        <button class="mode" aria-pressed="true"><svg class="i"><use href="#i-mic"/></svg><b>Record audio</b><small>Live transcript, speaker labels, moments pinned to the clock.</small></button>
+        <button class="mode" aria-pressed="false"><svg class="i"><use href="#i-note"/></svg><b>Notes &amp; assets only</b><small>No recording. Photos, files and notes still timestamped.</small></button>
+      </div>
+      <div class="whohere">
+        <span class="avs"><span class="avatar me">SU</span><span class="avatar b">MK</span><span class="avatar c">DT</span></span>
+        <div class="txt"><b>Who's in the room</b>Maya K. and Duc T. are on the invite. Anyone can join from their phone and pin assets to this session.</div>
+        <button class="btn btn-sm btn-outline-brand" data-go="join"><svg class="i" style="width:13px;height:13px"><use href="#i-qr"/></svg>Invite</button>
+      </div>
+      <div class="note in"><span>🔒</span><span>Recording consent banner will show on every joined device. <b>Rivera is a two-party-consent state</b> — the app asks everyone before audio starts.</span></div>
+    </div>
+    <div class="foot">
+      <button class="cta" data-go="live"><svg class="i"><use href="#i-mic"/></svg>Start recording</button>
+    </div>
+  </section>
+
+  <!-- ===== 03 LIVE ===== -->
+  <section class="screen" data-screen="live">
+    <div class="livehead">
+      <button class="back" data-go="sessions" style="width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--raised)"><svg class="i"><use href="#i-back"/></svg></button>
+      <div class="grow" style="min-width:0"><div class="serial">S-0147 · RIVERA COMPOSITES</div><div class="t">Supplier review — Rivera Composites</div></div>
+      <button class="avs" data-go="join" aria-label="Devices"><span class="avatar me">SU</span><span class="avatar b">MK</span><span class="avatar c">DT</span></button>
+    </div>
+    <div class="scroll" style="padding-top:0">
+      <div class="timer">00:14:32<small><span class="rec"><span class="dot"></span>Recording</span> &nbsp;·&nbsp; 3 devices contributing</small></div>
+      <div class="wave" aria-hidden="true">
+        <i style="--h:30%;--d:0s"></i><i style="--h:55%;--d:.1s"></i><i style="--h:80%;--d:.2s"></i><i style="--h:45%;--d:.3s"></i><i style="--h:95%;--d:.15s"></i><i style="--h:60%;--d:.05s"></i><i style="--h:35%;--d:.25s"></i><i style="--h:70%;--d:.35s"></i><i style="--h:100%;--d:.1s"></i><i style="--h:50%;--d:.2s"></i><i style="--h:40%;--d:.4s"></i><i style="--h:85%;--d:0s"></i><i style="--h:65%;--d:.3s"></i><i style="--h:30%;--d:.15s"></i><i style="--h:75%;--d:.25s"></i><i style="--h:50%;--d:.05s"></i><i style="--h:90%;--d:.35s"></i><i style="--h:40%;--d:.2s"></i><i style="--h:60%;--d:.1s"></i><i style="--h:35%;--d:.4s"></i>
+      </div>
+      <div class="tx">
+        <div class="h"><span class="spinner"></span>Live transcript</div>
+        <div class="line"><span class="ts">14:02</span><span><span class="who">Maya:</span> …so the layup schedule slips if the autoclave is down for the full week.</span></div>
+        <div class="line moment"><span class="ts">14:18</span><span><span class="who">Duc:</span> Let's just whiteboard the two options — <b>photo this when we're done.</b> <span class="pill hot" style="margin-left:4px">📷 Maya pinned a photo</span></span></div>
+        <div class="line"><span class="ts">14:25</span><span><span class="who">Rivera (Luis):</span> Option B keeps the cure cycle but needs the second tool by the 20th.</span></div>
+        <div class="line now"><span class="ts">14:32</span><span><span class="who">Scout:</span> If we go B, who owns the tooling PO<span class="cur"></span></span></div>
+      </div>
+    </div>
+    <div class="sec" style="margin:6px 20px 8px">Pinned to this session · 7<span class="rule"></span><button class="btn-link" style="font-size:var(--fs-micro)">See all</button></div>
+    <div class="strip">
+      <button class="thumb img a" data-go="detail"><span class="ts">14:18</span><span class="by"><span class="avatar b">MK</span></span></button>
+      <div class="thumb img b vid"><span class="ts">11:40</span><span class="by"><span class="avatar c">DT</span></span></div>
+      <div class="thumb doc"><svg class="i"><use href="#i-doc"/></svg>PDF<span class="ts">09:05</span><span class="by"><span class="avatar me">SU</span></span></div>
+      <div class="thumb img c"><span class="ts">07:12</span><span class="by"><span class="avatar c">DT</span></span><span class="up"><span class="spinner"></span></span></div>
+      <div class="thumb img d"><span class="ts">03:48</span><span class="by"><span class="avatar me">SU</span></span></div>
+      <div class="thumb doc"><svg class="i"><use href="#i-note"/></svg>NOTE<span class="ts">02:10</span><span class="by"><span class="avatar b">MK</span></span></div>
+      <button class="thumb add" data-go="attach">+</button>
+    </div>
+    <div class="capbar">
+      <button class="capbtn" data-go="camera"><span class="ring"><svg class="i"><use href="#i-cam"/></svg></span>Photo</button>
+      <button class="capbtn" data-go="camera"><span class="ring"><svg class="i"><use href="#i-vid"/></svg></span>Video</button>
+      <button class="capbtn stop" data-go="wrap"><span class="ring"></span>End</button>
+      <button class="capbtn" data-go="attach"><span class="ring"><svg class="i"><use href="#i-clip"/></svg></span>Files</button>
+      <button class="capbtn"><span class="ring"><svg class="i"><use href="#i-note"/></svg></span>Note</button>
+    </div>
+  </section>
+
+  <!-- ===== 04 CAMERA ===== -->
+  <section class="screen" data-screen="camera" style="padding-top:0">
+    <div class="cam">
+      <div class="wb"><i></i><i></i><i></i><i></i><i></i><i></i><u></u></div>
+      <div class="peg" style="top:calc(var(--safe-top) + 8px)">
+        <span class="rec"><span class="dot"></span>Rec</span>
+        <div class="txt"><b>Pinning to S-0147 · Rivera Composites</b>Shot lands in the transcript at this moment</div>
+        <span class="tsb">14:32</span>
+      </div>
+      <div class="camtoast">
+        <span class="tk"><svg class="i"><use href="#i-check"/></svg></span>
+        <div class="grow"><b>Pinned at 14:18 · by Maya</b><small>Whiteboard — "Option A vs B cure cycle" · 2 others in the room can see it</small></div>
+      </div>
+      <div class="cammode"><span>Video</span><b>Photo</b><span>Scan doc</span></div>
+      <div class="camctl">
+        <button class="last" data-go="detail" aria-label="Last shot"></button>
+        <button class="shutter" aria-label="Shutter" data-go="live"></button>
+        <button class="sw" aria-label="Flip camera"><svg class="i"><use href="#i-flip"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 05 ATTACH ===== -->
+  <section class="screen" data-screen="attach" style="padding-top:0;background:rgba(0,0,0,.35)">
+    <div class="sheet">
+      <div class="abar" style="padding-top:22px"><button class="back" data-go="live"><svg class="i"><use href="#i-back"/></svg></button><h2>Add to session</h2><span class="hero-tag">S-0147</span></div>
+      <div class="pegline"><svg class="i" style="color:var(--brand-orange)"><use href="#i-link"/></svg><span><b>Rivera Composites</b> · supplier review</span><span class="ts">now 14:32</span></div>
+      <div class="segs"><button aria-pressed="true">Photos &amp; video</button><button aria-pressed="false">Files</button><button aria-pressed="false">Link</button></div>
+      <div class="scroll" style="padding:0 0 12px">
+        <div class="grid">
+          <div class="cell-img a on"><span class="sel">1</span><span class="when">1:14 pm</span></div>
+          <div class="cell-img b vid on"><span class="sel">2</span></div>
+          <div class="cell-img c on"><span class="sel">3</span><span class="when">12:58</span></div>
+          <div class="cell-img d"><span class="sel"></span><span class="when">12:41</span></div>
+          <div class="cell-img e"><span class="sel"></span></div>
+          <div class="cell-img g"><span class="sel"></span><span class="when">Nov 3</span></div>
+          <div class="cell-img f"><span class="sel"></span></div>
+          <div class="cell-img"><span class="sel"></span><span class="when">Nov 3</span></div>
+          <div class="cell-img b"><span class="sel"></span></div>
+        </div>
+        <div class="sec" style="padding:0 20px">Files on this phone<span class="rule"></span></div>
+        <div class="filerow on"><span class="fi">PDF</span><div class="n"><b>Rivera_Quote_v3_2026-11-02.pdf</b><span>Mail · 2.1 MB · yesterday</span></div><span class="sel"></span></div>
+        <div class="filerow"><span class="fi">XLS</span><div class="n"><b>cure-cycle-comparison.xlsx</b><span>Files · 84 KB · Oct 30</span></div><span class="sel"></span></div>
+        <div class="pegopt">
+          <button aria-pressed="true"><b>Pin at now · 14:32</b>Appears in the transcript where you are right now.</button>
+          <button aria-pressed="false"><b>Pin at capture time</b>Uses each photo's own timestamp (1:14 pm → 14:02).</button>
+        </div>
+      </div>
+      <div class="foot">
+        <button class="cta" data-go="live"><svg class="i"><use href="#i-up"/></svg>Pin 4 items to this session</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 06 JOIN ===== -->
+  <section class="screen" data-screen="join">
+    <div class="abar"><button class="back" data-go="live"><svg class="i"><use href="#i-back"/></svg></button><h2>Devices in this session</h2></div>
+    <div class="scroll">
+      <div class="note in" style="margin-top:4px"><span>📸</span><span>Anyone who scans this joins <b>S-0147</b>. Their photos, files and notes pin to the same clock — Hyperspace stitches it all into one record.</span></div>
+      <div class="qr" id="qr" aria-label="QR code"></div>
+      <div class="code">RVR·4K2<small>or open capture.junkola.ai and enter the code</small></div>
+      <div class="sharerow">
+        <button class="btn"><svg class="i" style="width:14px;height:14px"><use href="#i-link"/></svg>Share link</button>
+        <button class="btn">AirDrop</button>
+        <button class="btn">SMS</button>
+      </div>
+      <div class="sec">Joined · 3<span class="rule"></span></div>
+      <div class="joined"><span class="avatar me">SU</span><div class="n"><b>Scout U. · host</b><span>iPhone · recording audio · 2 assets</span></div><span class="st"><span class="status-dot ok"></span>Live</span></div>
+      <div class="joined"><span class="avatar b">MK</span><div class="n"><b>Maya Kessler</b><span>Pixel · 3 assets · last pin 14:18</span></div><span class="st"><span class="status-dot ok"></span>Live</span></div>
+      <div class="joined"><span class="avatar c">DT</span><div class="n"><b>Duc Tran</b><span>iPhone · 2 assets · 1 uploading</span></div><span class="st"><span class="status-dot ok"></span>Live</span></div>
+      <div class="joined"><span class="avatar" style="background:var(--raised);color:var(--muted)">LR</span><div class="n"><b>Luis Rivera · guest</b><span>Invited by SMS · can pin, can't hear audio</span></div><span class="st wait"><span class="status-dot off"></span>Waiting</span></div>
+      <div class="note mt-2"><span>🧭</span><span>Guests outside your workspace can contribute assets but never receive the recording or transcript. Host approves what leaves the room.</span></div>
+    </div>
+  </section>
+
+  <!-- ===== 07 WRAP ===== -->
+  <section class="screen" data-screen="wrap">
+    <div class="abar"><button class="back" data-go="sessions"><svg class="i"><use href="#i-back"/></svg></button><h2>Session ended</h2><span class="hero-tag">S-0147</span></div>
+    <div class="scroll" style="padding-top:0">
+      <div class="sum-head" style="padding:0"><div class="t">Supplier review — Rivera Composites</div><div class="s">Today · 1:00–1:52 pm · 52 min · Rivera plant, Bldg C</div></div>
+      <div class="stats">
+        <div class="stat"><div class="n">52<span style="font-size:11px;font-weight:600;color:var(--muted)">m</span></div><div class="l">audio</div></div>
+        <div class="stat"><div class="n">9</div><div class="l">assets</div></div>
+        <div class="stat"><div class="n">3</div><div class="l">devices</div></div>
+        <div class="stat"><div class="n hot-text">5</div><div class="l">moments</div></div>
+      </div>
+      <div class="sync">
+        <div class="r"><span class="spinner"></span><b>Uploading to Hyperspace</b><span class="push mono" style="font-size:var(--fs-xs)">6 / 9</span></div>
+        <div class="bar"><i></i></div>
+        <div class="r" style="font-size:var(--fs-xs)">Audio uploaded · transcript ready in ~3 min · Duc's video still on his phone (waiting for Wi-Fi)</div>
+      </div>
+      <div class="sec">Timeline<span class="rule"></span></div>
+      <div class="tl">
+        <div class="ev"><div class="ts">00:00</div><div class="t">Kickoff — 3 devices joined</div><div class="s">Consent confirmed by Scout, Maya, Duc. Luis joined as guest at 02:40.</div></div>
+        <div class="ev"><div class="ts">03:48</div><div class="t">Quote walkthrough</div><div class="s">Scout pinned the v3 quote PDF; Luis walked the line items.</div>
+          <div class="assets"><div class="thumb doc"><svg class="i"><use href="#i-doc"/></svg>PDF</div><div class="thumb img d"></div></div></div>
+        <div class="ev decision"><div class="ts">14:18</div><div class="t">Decision — go with Option B cure cycle</div><div class="s">Whiteboard photo + Maya's note. Open: tooling PO owner.</div>
+          <div class="assets"><button class="thumb img a" data-go="detail"><span class="by"><span class="avatar b">MK</span></span></button><div class="thumb doc"><svg class="i"><use href="#i-note"/></svg>NOTE</div><span class="more">+1</span></div></div>
+        <div class="ev"><div class="ts">31:05</div><div class="t">Floor walk — autoclave bay</div><div class="s">Duc shot 2 videos of the second tool fixture; Scout photographed the data plate.</div>
+          <div class="assets"><div class="thumb img b vid"></div><div class="thumb img c"><span class="up"><span class="spinner"></span></span></div><div class="thumb img d"></div></div></div>
+        <div class="ev decision"><div class="ts">48:20</div><div class="t">Action — Rivera to send tooling lead time by Fri</div><div class="s">Luis committed; Scout to draft PO scope.</div></div>
+      </div>
+      <div class="will"><b>Hyperspace will now:</b><ul><li>transcribe + label speakers, extract decisions &amp; action items</li><li>link all 9 assets to the moment they were captured</li><li>file everything under <b>Rivera Composites › Supplier qualification</b></li><li>notify Duc and Maya when it's ready to review</li></ul></div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="foot">
+      <button class="cta" data-go="sessions"><svg class="i"><use href="#i-brain"/></svg>Send to Hyperspace</button>
+      <button class="cta secondary" style="min-height:44px;font-size:var(--fs-base)">Review assets first</button>
+    </div>
+  </section>
+
+  <!-- ===== 08 DETAIL ===== -->
+  <section class="screen" data-screen="detail">
+    <div class="abar"><button class="back" data-go="live"><svg class="i"><use href="#i-back"/></svg></button><h2>Whiteboard — Option A vs B</h2></div>
+    <div class="scroll" style="padding:0 0 24px">
+      <div class="hero-img"><div class="wbm"><i></i><i></i><i></i><i></i><i></i><u></u></div><span class="sr serial">A-0147-04</span></div>
+      <dl class="kv">
+        <dt>Pinned</dt><dd>14:18 into session<span class="muted">Captured 1:14 pm · Maya's Pixel</span></dd>
+        <dt>Session</dt><dd>S-0147 · Supplier review<span class="muted">Rivera Composites › Supplier qualification</span></dd>
+        <dt>Nearby</dt><dd>Maya's note (14:19) · Duc's video (11:40)</dd>
+      </dl>
+      <div class="said">
+        <div class="h">What was being said <span class="ts">14:02 → 14:25</span></div>
+        <p><b>Maya:</b> …the layup schedule slips if the autoclave is down the full week. <b>Duc:</b> Let's whiteboard the two options — photo this when we're done. <b>Luis:</b> Option B keeps the cure cycle but needs the second tool by the 20th.</p>
+        <button class="play"><svg class="i" style="width:12px;height:12px"><use href="#i-play"/></svg>Play 30s around this moment</button>
+      </div>
+      <div class="linkchips">
+        <span class="chip"><span class="dotc"></span>Decision · Option B</span>
+        <span class="chip ai">✦ Read by Hyperspace: "A: 2 cycles / B: 1 cycle + tool #2"</span>
+        <span class="chip ai">✦ Mentions: autoclave, Nov 20</span>
+      </div>
+      <div class="note mt-2" style="margin:14px 20px 0"><span>🔗</span><span>In Hyperspace this photo sits inside the meeting record at 14:18 — ask "what did Rivera's whiteboard say about cure cycles?" and this is what comes back.</span></div>
+    </div>
+    <div class="foot">
+      <button class="cta secondary" style="min-height:44px;font-size:var(--fs-base)">Re-pin to a different moment</button>
+    </div>
+  </section>
+
+</div>
+</main>
+<div class="stage-cap">Junkola Hyperspace · Capture (mobile) · clickable prototype · press 1–8 to jump</div>
+
+<script>
+/* ---------------------------------------------------------------- seed data
+   Kept here so it's easy to find and rewrite. Everything on screen is mocked;
+   nothing records, uploads or persists.                                         */
+const SESSION = {
+  serial:'S-0147', title:'Supplier review — Rivera Composites',
+  engagement:'Rivera Composites › Supplier qualification', code:'RVR·4K2',
+  devices:[{id:'SU',name:'Scout U.',role:'host'},{id:'MK',name:'Maya Kessler'},{id:'DT',name:'Duc Tran'},{id:'LR',name:'Luis Rivera',role:'guest',waiting:true}],
+  assets:[
+    {id:'A-0147-04',kind:'photo',ts:'14:18',by:'MK',title:'Whiteboard — Option A vs B'},
+    {id:'A-0147-03',kind:'video',ts:'11:40',by:'DT',title:'Tool fixture #2'},
+    {id:'A-0147-02',kind:'file', ts:'09:05',by:'SU',title:'Rivera_Quote_v3.pdf'},
+    {id:'A-0147-05',kind:'photo',ts:'07:12',by:'DT',title:'Data plate',uploading:true},
+    {id:'A-0147-01',kind:'photo',ts:'03:48',by:'SU',title:'Line item sheet'},
+    {id:'A-0147-06',kind:'note', ts:'02:10',by:'MK',title:'Consent confirmed'}
+  ]
+};
+const SCREENS=['sessions','start','live','camera','attach','join','wrap','detail'];
+
+/* ---------------------------------------------------------------- routing */
+function go(name){
+  if(!SCREENS.includes(name)) name='sessions';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.dataset.screen===name));
+  document.querySelectorAll('.rail .side-item').forEach(b=>b.classList.toggle('active',b.dataset.go===name));
+  if(location.hash!=='#'+name) history.replaceState(null,'','#'+name);
+  const sc=document.querySelector('.screen.on .scroll'); if(sc) sc.scrollTop=0;
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-go]'); if(t){e.preventDefault();go(t.dataset.go);}
+});
+window.addEventListener('hashchange',()=>go(location.hash.slice(1)));
+document.addEventListener('keydown',e=>{
+  const n=parseInt(e.key,10); if(n>=1&&n<=SCREENS.length&&!e.metaKey&&!e.ctrlKey) go(SCREENS[n-1]);
+});
+
+/* ---------------------------------------------------------------- fake QR (deterministic from session code) */
+(function(){
+  const qr=document.getElementById('qr'); if(!qr) return;
+  let seed=0; for(const ch of SESSION.code) seed=(seed*31+ch.charCodeAt(0))>>>0;
+  const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+  const N=21, finder=(x,y)=>(x<7&&y<7)||(x>=N-7&&y<7)||(x<7&&y>=N-7);
+  const fin=(x,y)=>{const lx=x<7?x:x-(N-7), ly=y<7?y:y-(N-7); return lx===0||lx===6||ly===0||ly===6||(lx>=2&&lx<=4&&ly>=2&&ly<=4)};
+  let h=''; for(let y=0;y<N;y++)for(let x=0;x<N;x++){const on=finder(x,y)?fin(x,y):rnd()>.52; h+=`<i class="${on?'':'o'}"></i>`}
+  qr.innerHTML=h;
+})();
+
+go(location.hash.slice(1)||'sessions');
+</script>
+</body>
+</html>
