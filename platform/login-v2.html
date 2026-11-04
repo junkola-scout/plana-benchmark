@@ -1,1 +1,748 @@
+<!doctype html>
+<html lang="en" class="light" style="color-scheme: dark;">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in to PLANA Hyperspace</title>
+<meta name="description" content="PLANA Hyperspace turns company work into searchable, grounded intelligence.">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
 
+<!--
+  =========================================================================
+  PLANA Hyperspace — Login v2 (design working copy)
+
+  BASELINE: captured 2026-09-04 from the live page
+  https://platform.pioneerxity.ai/en/login
+  The markup below is the rendered DOM of that page, and the CSS is the
+  subset of the live Tailwind v4 build that this page actually uses
+  (compiled utilities, not a CDN). It renders pixel-faithfully to the
+  live page and is the starting point for the new design version.
+
+  CONVENTIONS
+  · Class names are the same Tailwind v4 utilities Vu's platform uses, so
+    changes here map 1:1 onto his React components.
+  · Brand orange #e56203 · accent text #f18a42
+  · Gradient ramp (arrows + primary buttons): #e50602 → #e56203 → #f5a623
+  · Page background #0c0c0d · card surface #171719/90
+  · Font: Geist (loaded from Google Fonts here; self-hosted on the platform)
+  · Assets: logo.svg (mark, inverted to white) and
+    Logo-hyperspace-white.png (card wordmark) live in this folder — same filenames as the live site.
+  · Links point at the live platform so the prototype stays clickable.
+  =========================================================================
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+
+<style>
+/* ───────────────────────────── Tokens ───────────────────────────── */
+:root{
+  --font-geist-sans:"Geist","Geist Fallback",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --default-font-family:var(--font-geist-sans);
+
+  --color-black:#000;
+  --color-white:#fff;
+  --spacing:.25rem;
+  --container-md:28rem;
+  --container-lg:32rem;
+  --container-xl:36rem;
+  --text-xs:.75rem;   --text-xs--line-height:calc(1/.75);
+  --text-sm:.875rem;  --text-sm--line-height:calc(1.25/.875);
+  --text-base:1rem;   --text-base--line-height:calc(1.5/1);
+  --text-3xl:1.875rem;--text-3xl--line-height:calc(2.25/1.875);
+  --text-4xl:2.25rem; --text-4xl--line-height:calc(2.5/2.25);
+  --text-6xl:3.75rem; --text-6xl--line-height:1;
+  --font-weight-medium:500;
+  --font-weight-semibold:600;
+  --font-weight-bold:700;
+  --font-weight-black:900;
+  --tracking-tight:-.025em;
+  --radius:.625rem;          /* shadcn radius: rounded-lg = --radius, rounded-md = --radius - 2px */
+  --radius-2xl:1rem;
+  --radius-3xl:1.5rem;
+  --blur-3xl:64px;
+  --default-transition-duration:.15s;
+  --default-transition-timing-function:cubic-bezier(.4,0,.2,1);
+
+  /* shadcn theme vars still referenced by the button/input primitives */
+  --background:#fff;
+  --foreground:#0a0a0a;
+  --primary:#171717;
+  --primary-foreground:#fafafa;
+  --border:#e5e5e5;
+  --ring:#a1a1a1;
+  --destructive:#e7000b;
+  --input:#e5e5e5;
+}
+@font-face{font-family:"Geist Fallback";src:local("Arial");ascent-override:95.94%;descent-override:28.16%;line-gap-override:0%;size-adjust:104.76%}
+
+/* Tailwind v4 property registrations (so the shadow/ring/filter var stacks compose) */
+@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}
+@property --tw-leading{syntax:"*";inherits:false}
+@property --tw-font-weight{syntax:"*";inherits:false}
+@property --tw-tracking{syntax:"*";inherits:false}
+@property --tw-shadow{syntax:"*";inherits:false;initial-value:0 0 transparent}
+@property --tw-shadow-color{syntax:"*";inherits:false}
+@property --tw-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}
+@property --tw-inset-shadow{syntax:"*";inherits:false;initial-value:0 0 transparent}
+@property --tw-inset-shadow-color{syntax:"*";inherits:false}
+@property --tw-inset-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}
+@property --tw-ring-color{syntax:"*";inherits:false}
+@property --tw-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 transparent}
+@property --tw-inset-ring-color{syntax:"*";inherits:false}
+@property --tw-inset-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 transparent}
+@property --tw-ring-inset{syntax:"*";inherits:false}
+@property --tw-ring-offset-width{syntax:"<length>";inherits:false;initial-value:0}
+@property --tw-ring-offset-color{syntax:"*";inherits:false;initial-value:#fff}
+@property --tw-ring-offset-shadow{syntax:"*";inherits:false;initial-value:0 0 transparent}
+@property --tw-outline-style{syntax:"*";inherits:false;initial-value:solid}
+@property --tw-blur{syntax:"*";inherits:false}
+@property --tw-brightness{syntax:"*";inherits:false}
+@property --tw-contrast{syntax:"*";inherits:false}
+@property --tw-grayscale{syntax:"*";inherits:false}
+@property --tw-hue-rotate{syntax:"*";inherits:false}
+@property --tw-invert{syntax:"*";inherits:false}
+@property --tw-opacity{syntax:"*";inherits:false}
+@property --tw-saturate{syntax:"*";inherits:false}
+@property --tw-sepia{syntax:"*";inherits:false}
+@property --tw-drop-shadow{syntax:"*";inherits:false}
+@property --tw-drop-shadow-color{syntax:"*";inherits:false}
+@property --tw-drop-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}
+@property --tw-drop-shadow-size{syntax:"*";inherits:false}
+@property --tw-backdrop-blur{syntax:"*";inherits:false}
+@property --tw-backdrop-brightness{syntax:"*";inherits:false}
+@property --tw-backdrop-contrast{syntax:"*";inherits:false}
+@property --tw-backdrop-grayscale{syntax:"*";inherits:false}
+@property --tw-backdrop-hue-rotate{syntax:"*";inherits:false}
+@property --tw-backdrop-invert{syntax:"*";inherits:false}
+@property --tw-backdrop-opacity{syntax:"*";inherits:false}
+@property --tw-backdrop-saturate{syntax:"*";inherits:false}
+@property --tw-backdrop-sepia{syntax:"*";inherits:false}
+@property --tw-duration{syntax:"*";inherits:false}
+@property --tw-ease{syntax:"*";inherits:false}
+
+/* ───────────────────────────── Base (Tailwind preflight) ───────────────────────────── */
+*,::after,::before{box-sizing:border-box;border:0 solid;margin:0;padding:0}
+::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,ui-sans-serif,system-ui,sans-serif);-webkit-tap-highlight-color:transparent}
+h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}
+a{color:inherit;text-decoration:inherit}
+img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}
+img,video{max-width:100%;height:auto}
+button,input,select,optgroup,textarea{font:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:transparent;border-radius:0}
+::placeholder{opacity:1;color:currentcolor}
+button{appearance:button}
+[hidden]:where(:not([hidden="until-found"])){display:none!important}
+*{border-color:var(--border);outline-color:var(--ring)}
+html,body{background:#0c0c0d}
+body{color:var(--foreground);font-family:var(--font-geist-sans)}
+.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+/* ───────────────────────────── Utilities used on this page ───────────────────────────── */
+.pointer-events-none{pointer-events:none}
+.absolute{position:absolute}
+.relative{position:relative}
+.top-\[-18rem\]{top:-18rem}
+.right-\[-12rem\]{right:-12rem}
+.bottom-\[-20rem\]{bottom:-20rem}
+.-left-40{left:calc(var(--spacing)*-40)}
+.z-10{z-index:10}
+.order-1{order:1}
+.order-2{order:2}
+.mx-auto{margin-left:auto;margin-right:auto}
+.mt-1{margin-top:calc(var(--spacing)*1)}
+.mt-2{margin-top:calc(var(--spacing)*2)}
+.mt-3{margin-top:calc(var(--spacing)*3)}
+.mt-4{margin-top:calc(var(--spacing)*4)}
+.mt-6{margin-top:calc(var(--spacing)*6)}
+.mt-7{margin-top:calc(var(--spacing)*7)}
+.mt-9{margin-top:calc(var(--spacing)*9)}
+.mb-4{margin-bottom:calc(var(--spacing)*4)}
+.mb-6{margin-bottom:calc(var(--spacing)*6)}
+.mb-8{margin-bottom:calc(var(--spacing)*8)}
+.block{display:block}
+.flex{display:flex}
+.grid{display:grid}
+.hidden{display:none}
+.inline-flex{display:inline-flex}
+.h-1\.5{height:calc(var(--spacing)*1.5)}
+.h-3{height:calc(var(--spacing)*3)}
+.h-3\.5{height:calc(var(--spacing)*3.5)}
+.h-4{height:calc(var(--spacing)*4)}
+.h-5{height:calc(var(--spacing)*5)}
+.h-7{height:calc(var(--spacing)*7)}
+.h-10{height:calc(var(--spacing)*10)}
+.h-11{height:calc(var(--spacing)*11)}
+.h-12{height:calc(var(--spacing)*12)}
+.h-\[38rem\]{height:38rem}
+.h-\[42rem\]{height:42rem}
+.min-h-\[31rem\]{min-height:31rem}
+.min-h-svh{min-height:100svh}
+.w-1\.5{width:calc(var(--spacing)*1.5)}
+.w-3{width:calc(var(--spacing)*3)}
+.w-3\.5{width:calc(var(--spacing)*3.5)}
+.w-4{width:calc(var(--spacing)*4)}
+.w-5{width:calc(var(--spacing)*5)}
+.w-6{width:calc(var(--spacing)*6)}
+.w-\[38rem\]{width:38rem}
+.w-\[42rem\]{width:42rem}
+.w-auto{width:auto}
+.w-fit{width:fit-content}
+.w-full{width:100%}
+.max-w-\[210px\]{max-width:210px}
+.max-w-\[1480px\]{max-width:1480px}
+.max-w-lg{max-width:var(--container-lg)}
+.max-w-md{max-width:var(--container-md)}
+.max-w-xl{max-width:var(--container-xl)}
+.min-w-0{min-width:0}
+.flex-1{flex:1 1 0%}
+.shrink-0{flex-shrink:0}
+.flex-col{flex-direction:column}
+.items-center{align-items:center}
+.justify-center{justify-content:center}
+.gap-1{gap:calc(var(--spacing)*1)}
+.gap-2{gap:calc(var(--spacing)*2)}
+.gap-2\.5{gap:calc(var(--spacing)*2.5)}
+.gap-3{gap:calc(var(--spacing)*3)}
+.gap-4{gap:calc(var(--spacing)*4)}
+.gap-6{gap:calc(var(--spacing)*6)}
+.overflow-hidden{overflow:hidden}
+.rounded-2xl{border-radius:var(--radius-2xl)}
+.rounded-3xl{border-radius:var(--radius-3xl)}
+.rounded-full{border-radius:3.40282e38px}
+.rounded-lg{border-radius:var(--radius)}
+.rounded-md{border-radius:calc(var(--radius) - 2px)}
+.border{border-style:var(--tw-border-style);border-width:1px}
+.border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}
+.border-\[\#e56203\]\/25{border-color:rgba(229,98,3,.25)}
+.border-white\/10{border-color:rgba(255,255,255,.1)}
+.bg-\[\#0c0c0d\]{background-color:#0c0c0d}
+.bg-\[\#171719\]\/90{background-color:rgba(23,23,25,.9)}
+.bg-\[\#e56203\]{background-color:#e56203}
+.bg-\[\#e56203\]\/\[0\.05\]{background-color:rgba(229,98,3,.05)}
+.bg-\[\#e56203\]\/\[0\.08\]{background-color:rgba(229,98,3,.08)}
+.bg-white\/\[0\.04\]{background-color:rgba(255,255,255,.04)}
+.bg-white\/\[0\.025\]{background-color:rgba(255,255,255,.025)}
+.bg-white\/\[0\.035\]{background-color:rgba(255,255,255,.035)}
+.object-contain{object-fit:contain}
+.object-left{object-position:left center}
+.p-4{padding:calc(var(--spacing)*4)}
+.p-6{padding:calc(var(--spacing)*6)}
+.px-3{padding-inline:calc(var(--spacing)*3)}
+.px-4{padding-inline:calc(var(--spacing)*4)}
+.px-6{padding-inline:calc(var(--spacing)*6)}
+.py-1{padding-block:calc(var(--spacing)*1)}
+.py-1\.5{padding-block:calc(var(--spacing)*1.5)}
+.py-2{padding-block:calc(var(--spacing)*2)}
+.py-7{padding-block:calc(var(--spacing)*7)}
+.py-10{padding-block:calc(var(--spacing)*10)}
+.py-14{padding-block:calc(var(--spacing)*14)}
+.pt-7{padding-top:calc(var(--spacing)*7)}
+.text-center{text-align:center}
+.text-3xl{font-size:var(--text-3xl);line-height:var(--tw-leading,var(--text-3xl--line-height))}
+.text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}
+.text-base{font-size:var(--text-base);line-height:var(--tw-leading,var(--text-base--line-height))}
+.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}
+.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading,var(--text-xs--line-height))}
+.text-\[10px\]{font-size:10px}
+.text-\[11px\]{font-size:11px}
+.leading-5{--tw-leading:calc(var(--spacing)*5);line-height:calc(var(--spacing)*5)}
+.leading-6{--tw-leading:calc(var(--spacing)*6);line-height:calc(var(--spacing)*6)}
+.leading-7{--tw-leading:calc(var(--spacing)*7);line-height:calc(var(--spacing)*7)}
+.leading-\[0\.98\]{--tw-leading:.98;line-height:.98}
+.font-black{--tw-font-weight:var(--font-weight-black);font-weight:var(--font-weight-black)}
+.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}
+.font-medium{--tw-font-weight:var(--font-weight-medium);font-weight:var(--font-weight-medium)}
+.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}
+.tracking-\[-0\.05em\]{--tw-tracking:-.05em;letter-spacing:-.05em}
+.tracking-\[-0\.06em\]{--tw-tracking:-.06em;letter-spacing:-.06em}
+.tracking-\[0\.12em\]{--tw-tracking:.12em;letter-spacing:.12em}
+.tracking-\[0\.18em\]{--tw-tracking:.18em;letter-spacing:.18em}
+.tracking-tight{--tw-tracking:var(--tracking-tight);letter-spacing:var(--tracking-tight)}
+.whitespace-nowrap{white-space:nowrap}
+.\!text-white{color:var(--color-white)!important}
+.text-\[\#f18a42\]{color:#f18a42}
+.text-primary-foreground{color:var(--primary-foreground)}
+.text-white{color:var(--color-white)}
+.text-white\/25{color:rgba(255,255,255,.25)}
+.text-white\/40{color:rgba(255,255,255,.4)}
+.text-white\/45{color:rgba(255,255,255,.45)}
+.text-white\/50{color:rgba(255,255,255,.5)}
+.text-white\/55{color:rgba(255,255,255,.55)}
+.text-white\/70{color:rgba(255,255,255,.7)}
+.uppercase{text-transform:uppercase}
+.underline{text-decoration-line:underline}
+.underline-offset-4{text-underline-offset:4px}
+.shadow-2xl{--tw-shadow:0 25px 50px -12px var(--tw-shadow-color,rgba(0,0,0,.25));box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}
+.shadow-xs{--tw-shadow:0 1px 2px 0 var(--tw-shadow-color,rgba(0,0,0,.05));box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}
+.shadow-black\/30{--tw-shadow-color:rgba(0,0,0,.3)}
+.blur-3xl{--tw-blur:blur(var(--blur-3xl));filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}
+.brightness-0{--tw-brightness:brightness(0%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}
+.invert{--tw-invert:invert(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}
+.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)}
+.transition-all{transition-property:all;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}
+.transition-colors{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}
+.transition-\[color\,box-shadow\]{transition-property:color,box-shadow;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}
+.outline-none{--tw-outline-style:none;outline-style:none}
+.select-none{-webkit-user-select:none;user-select:none}
+
+/* ── variants ── */
+.selection\:bg-primary ::selection,.selection\:bg-primary::selection{background-color:var(--primary)}
+.selection\:text-primary-foreground ::selection,.selection\:text-primary-foreground::selection{color:var(--primary-foreground)}
+.placeholder\:text-white\/25::placeholder{color:rgba(255,255,255,.25)}
+.\[\&_svg\]\:pointer-events-none svg{pointer-events:none}
+.\[\&_svg\]\:shrink-0 svg{flex-shrink:0}
+.\[\&_svg\:not\(\[class\*\=\'size-\'\]\)\]\:size-4 svg:not([class*="size-"]){width:calc(var(--spacing)*4);height:calc(var(--spacing)*4)}
+.has-\[\>svg\]\:px-3:has(> svg){padding-inline:calc(var(--spacing)*3)}
+.group-data-\[disabled\=true\]\:pointer-events-none:is(:where(.group)[data-disabled="true"] *){pointer-events:none}
+.group-data-\[disabled\=true\]\:opacity-50:is(:where(.group)[data-disabled="true"] *){opacity:.5}
+.peer-disabled\:cursor-not-allowed:is(:where(.peer):disabled ~ *){cursor:not-allowed}
+.peer-disabled\:opacity-50:is(:where(.peer):disabled ~ *){opacity:.5}
+.aria-invalid\:border-destructive[aria-invalid="true"]{border-color:var(--destructive)}
+.aria-invalid\:ring-destructive\/20[aria-invalid="true"]{--tw-ring-color:color-mix(in oklab,var(--destructive) 20%,transparent)}
+.dark\:bg-input\/30:is(.dark *){background-color:color-mix(in oklab,var(--input) 30%,transparent)}
+.dark\:aria-invalid\:ring-destructive\/40:is(.dark *)[aria-invalid="true"]{--tw-ring-color:color-mix(in oklab,var(--destructive) 40%,transparent)}
+
+@media (hover:hover){
+  .hover\:border-\[\#e56203\]\/50:hover{border-color:rgba(229,98,3,.5)}
+  .hover\:bg-\[\#e56203\]\/10:hover{background-color:rgba(229,98,3,.1)}
+  .hover\:bg-\[\#f07819\]:hover{background-color:#f07819}
+  .hover\:text-white:hover{color:var(--color-white)}
+  .hover\:text-white\/55:hover{color:rgba(255,255,255,.55)}
+  .hover\:text-white\/60:hover{color:rgba(255,255,255,.6)}
+  .hover\:underline:hover{text-decoration-line:underline}
+}
+.focus-visible\:border-\[\#e56203\]\/70:focus-visible{border-color:rgba(229,98,3,.7)}
+.focus-visible\:border-ring:focus-visible{border-color:var(--ring)}
+.focus-visible\:ring-\[3px\]:focus-visible{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}
+.focus-visible\:ring-\[\#e56203\]\/25:focus-visible{--tw-ring-color:rgba(229,98,3,.25)}
+.focus-visible\:ring-ring\/50:focus-visible{--tw-ring-color:color-mix(in oklab,var(--ring) 50%,transparent)}
+.disabled\:pointer-events-none:disabled{pointer-events:none}
+.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}
+.disabled\:opacity-50:disabled{opacity:.5}
+
+/* ── breakpoints ── */
+@media (min-width:40rem){
+  .sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sm\:p-9{padding:calc(var(--spacing)*9)}
+  .sm\:px-10{padding-inline:calc(var(--spacing)*10)}
+  .sm\:text-6xl{font-size:var(--text-6xl);line-height:var(--tw-leading,var(--text-6xl--line-height))}
+  .sm\:text-base{font-size:var(--text-base);line-height:var(--tw-leading,var(--text-base--line-height))}
+}
+@media (min-width:48rem){
+  .md\:text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}
+}
+@media (min-width:64rem){
+  .lg\:order-1{order:1}
+  .lg\:order-2{order:2}
+  .lg\:block{display:block}
+  .lg\:hidden{display:none}
+  .lg\:min-h-svh{min-height:100svh}
+  .lg\:grid-cols-\[1\.08fr_0\.92fr\]{grid-template-columns:1.08fr .92fr}
+  .lg\:border-t-0{border-top-style:var(--tw-border-style);border-top-width:0}
+  .lg\:border-b-0{border-bottom-style:var(--tw-border-style);border-bottom-width:0}
+  .lg\:border-l{border-left-style:var(--tw-border-style);border-left-width:1px}
+  .lg\:px-16{padding-inline:calc(var(--spacing)*16)}
+  .lg\:py-0{padding-block:0}
+  .lg\:py-10{padding-block:calc(var(--spacing)*10)}
+}
+
+/* ───────────────────────────── v2: Capture → Extract → Track ─────────────────────────────
+   Replaces the "Workspace intelligence" badge / headline / feature cards.
+   Brand palette: red #e50602 → orange #e56203 → amber #f5a623, on the #0c0c0d ground.
+   The arrows echo the slide artwork (speed lines + gradient chevron, black italic label)
+   but sit on the dark theme; lists use the same "➔" bullets as the slide.               */
+.ce-wrap{max-width:var(--container-xl);width:100%}
+.ce-headline{
+  max-width:34rem;
+  font-size:1.5rem;line-height:1.2;
+  font-weight:var(--font-weight-black);
+  letter-spacing:-.04em;
+  color:var(--color-white);
+}
+.ce-flow{
+  list-style:none;margin:0;padding:0;
+  margin-top:calc(var(--spacing)*9);
+  display:grid;gap:calc(var(--spacing)*4);
+  grid-template-columns:1fr;
+}
+.ce-step{min-width:0}
+
+/* arrow = speed lines + chevron */
+.ce-arrow{display:flex;align-items:center;gap:6px;height:4.25rem;max-width:17rem}
+.ce-lines{display:flex;align-items:stretch;gap:5px;height:56%}
+.ce-lines i{display:block;width:5px;border-radius:2px;background:linear-gradient(180deg,#e50602 0%,#e56203 100%)}
+.ce-lines i:first-child{width:3px;opacity:.75}
+.ce-chevron{
+  position:relative;flex:1;height:100%;min-width:0;
+  display:flex;align-items:center;
+  padding-left:calc(var(--spacing)*3);
+  clip-path:polygon(0 22%,72% 22%,72% 0,100% 50%,72% 100%,72% 78%,0 78%);
+  background:linear-gradient(115deg,#e50602 0%,#e56203 38%,#f5a623 100%);
+}
+.ce-arrow{filter:drop-shadow(0 10px 28px rgba(229,98,3,.22))}
+.ce-label{
+  font-size:1.0625rem;line-height:1;
+  font-weight:var(--font-weight-black);font-style:italic;
+  text-transform:uppercase;letter-spacing:-.02em;
+  color:#0c0c0d;white-space:nowrap;
+}
+
+/* shared gradient button treatment — same ramp as the arrows (Login + Watch the intro) */
+.hv-grad{
+  background-color:#e56203;
+  background-image:linear-gradient(115deg,#e50602 0%,#e56203 38%,#f5a623 100%);
+  color:#0c0c0d;
+  box-shadow:0 10px 28px -10px rgba(229,98,3,.55);
+  transition:filter .15s,box-shadow .15s,transform .15s;
+}
+.hv-grad:hover{filter:brightness(1.08) saturate(1.05);box-shadow:0 14px 32px -10px rgba(229,98,3,.7)}
+.hv-grad:active{filter:brightness(.97)}
+
+/* copy under each arrow */
+.ce-title{
+  margin-top:calc(var(--spacing)*5);
+  font-size:var(--text-sm);line-height:1.25;
+  font-weight:var(--font-weight-bold);
+  color:var(--color-white);
+}
+.ce-list{list-style:none;margin:calc(var(--spacing)*2) 0 0;padding:0;display:grid;gap:calc(var(--spacing)*1.5)}
+.ce-list li{
+  position:relative;padding-left:1.5rem;
+  font-size:var(--text-sm);line-height:1.35;
+  color:rgba(255,255,255,.6);
+}
+.ce-list li::before{
+  content:"➔";position:absolute;left:0;top:0;
+  color:#f18a42;font-size:.9em;line-height:1.5;
+}
+
+/* responsive: three columns from the sm breakpoint up */
+@media (min-width:40rem){
+  .ce-headline{font-size:1.75rem}
+  .ce-flow{grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(var(--spacing)*3)}
+  .ce-arrow{height:4.5rem;max-width:none}
+  .ce-label{font-size:.9375rem}
+}
+@media (min-width:64rem){
+  .ce-headline{font-size:1.875rem}
+  .ce-flow{gap:calc(var(--spacing)*4)}
+  .ce-arrow{height:5rem}
+  .ce-label{font-size:1.0625rem}
+  .ce-flow{gap:calc(var(--spacing)*5)}
+  .ce-list li{font-size:var(--text-base);line-height:1.4}
+}
+/* ───────────────────────────── v2: Intro video modal ─────────────────────────────
+   Opens automatically on load and autoplays hyperspace_beta_intro_video.mp4 (same folder).
+   Browsers only allow *muted* autoplay without a prior click, so the script tries with
+   sound first and falls back to muted + a "Tap for sound" button. Closes on ✕, Esc,
+   backdrop click, "Skip intro", or when the video ends.                                */
+.hv-modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:calc(var(--spacing)*4)}
+.hv-modal[hidden]{display:none}
+.hv-backdrop{position:absolute;inset:0;background:rgba(12,12,13,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.hv-panel{
+  position:relative;width:100%;max-width:60rem;
+  border:1px solid rgba(255,255,255,.1);border-radius:var(--radius-3xl);
+  background:rgba(23,23,25,.96);
+  box-shadow:0 25px 50px -12px rgba(0,0,0,.6),0 0 0 1px rgba(229,98,3,.08),0 30px 90px -20px rgba(229,98,3,.25);
+  padding:calc(var(--spacing)*5);
+  animation:hv-in .32s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes hv-in{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hv-panel{animation:none}}
+.hv-head{display:flex;align-items:flex-start;justify-content:space-between;gap:calc(var(--spacing)*4);margin-bottom:calc(var(--spacing)*4)}
+.hv-eyebrow{display:inline-flex;align-items:center;gap:calc(var(--spacing)*2);border:1px solid rgba(229,98,3,.25);background:rgba(229,98,3,.08);border-radius:999px;padding:calc(var(--spacing)*1.5) calc(var(--spacing)*3);font-size:10px;font-weight:var(--font-weight-bold);text-transform:uppercase;letter-spacing:.18em;color:#f18a42}
+.hv-eyebrow i{display:block;width:6px;height:6px;border-radius:999px;background:#e56203}
+.hv-title{margin-top:calc(var(--spacing)*3);font-size:1.375rem;line-height:1.15;font-weight:var(--font-weight-black);letter-spacing:-.04em;color:var(--color-white)}
+.hv-sub{margin-top:calc(var(--spacing)*1.5);font-size:var(--text-sm);line-height:1.5;color:rgba(255,255,255,.45)}
+.hv-close{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.7);cursor:pointer;transition:color .15s,background-color .15s,border-color .15s}
+.hv-close:hover{color:#fff;border-color:rgba(229,98,3,.5);background:rgba(229,98,3,.1)}
+.hv-close:focus-visible,.hv-unmute:focus-visible,.hv-skip:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(229,98,3,.4)}
+.hv-stage{position:relative;aspect-ratio:16/9;border-radius:var(--radius-2xl);overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.08)}
+.hv-stage video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.hv-unmute{
+  position:absolute;left:calc(var(--spacing)*4);top:calc(var(--spacing)*4);
+  display:inline-flex;align-items:center;gap:calc(var(--spacing)*2);
+  height:2.75rem;padding:0 calc(var(--spacing)*4);border-radius:var(--radius);
+  background:#e56203;color:#fff;font-size:var(--text-sm);font-weight:var(--font-weight-semibold);
+  border:0;cursor:pointer;box-shadow:0 10px 30px -10px rgba(229,98,3,.7);
+  transition:background-color .15s,opacity .2s,transform .2s;
+}
+.hv-unmute:hover{background:#f07819}
+.hv-unmute[hidden]{display:none}
+.hv-unmute svg{width:1rem;height:1rem}
+.hv-foot{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--spacing)*4);margin-top:calc(var(--spacing)*4)}
+.hv-meta{font-size:11px;color:rgba(255,255,255,.25)}
+.hv-skip{display:inline-flex;align-items:center;gap:calc(var(--spacing)*1.5);background:none;border:0;cursor:pointer;font-size:var(--text-sm);font-weight:var(--font-weight-medium);color:rgba(255,255,255,.55);border-radius:var(--radius);padding:calc(var(--spacing)*2) calc(var(--spacing)*1);transition:color .15s}
+.hv-skip:hover{color:#f18a42}
+.hv-skip svg{width:.875rem;height:.875rem}
+body.hv-open{overflow:hidden}
+
+/* Floating "Watch the intro" button — sticky bottom-right, reopens the modal */
+.hv-fab{
+  position:fixed;right:calc(var(--spacing)*5);bottom:calc(var(--spacing)*5);z-index:40;
+  display:inline-flex;align-items:center;gap:calc(var(--spacing)*2.5);
+  height:3rem;padding:0 calc(var(--spacing)*5) 0 calc(var(--spacing)*4);
+  border:0;border-radius:999px;cursor:pointer;
+  background-color:#e56203;
+  background-image:linear-gradient(115deg,#e50602 0%,#e56203 38%,#f5a623 100%);
+  color:#0c0c0d;
+  font-family:inherit;font-size:var(--text-sm);font-weight:var(--font-weight-bold);letter-spacing:-.01em;white-space:nowrap;
+  box-shadow:0 12px 32px -8px rgba(229,98,3,.55),0 2px 6px rgba(0,0,0,.35);
+  transition:filter .15s,transform .15s,box-shadow .15s,opacity .2s;
+}
+.hv-fab:hover{filter:brightness(1.08) saturate(1.05);transform:translateY(-1px);box-shadow:0 16px 36px -8px rgba(229,98,3,.65),0 2px 6px rgba(0,0,0,.35)}
+.hv-fab:active{transform:translateY(0)}
+.hv-fab:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(229,98,3,.4),0 12px 32px -8px rgba(229,98,3,.55)}
+.hv-fab-icon{display:inline-flex;align-items:center;justify-content:center;width:1.75rem;height:1.75rem;border-radius:999px;background:rgba(12,12,13,.85);color:#f5a623}
+.hv-fab-icon svg{width:.8rem;height:.8rem;margin-left:1px;fill:currentColor}
+body.hv-open .hv-fab{opacity:0;pointer-events:none}
+@media (max-width:39.99rem){
+  .hv-fab{right:calc(var(--spacing)*4);bottom:calc(var(--spacing)*4);height:2.75rem;padding:0 calc(var(--spacing)*4) 0 calc(var(--spacing)*3)}
+}
+@media (min-width:40rem){
+  .hv-panel{padding:calc(var(--spacing)*7)}
+  .hv-title{font-size:1.625rem}
+}
+</style>
+</head>
+
+<body class="antialiased">
+<main class="min-h-svh overflow-hidden bg-[#0c0c0d] text-white">
+  <div class="relative min-h-svh">
+
+    <!-- ambient glows -->
+    <div class="pointer-events-none absolute -left-40 top-[-18rem] h-[42rem] w-[42rem] rounded-full bg-[#e56203]/[0.08] blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-[-20rem] right-[-12rem] h-[38rem] w-[38rem] rounded-full bg-[#e56203]/[0.05] blur-3xl"></div>
+
+    <!-- brand bar (mobile / tablet only; desktop shows it inside the left column) -->
+    <div class="relative z-10 px-6 pt-7 sm:px-10 lg:hidden">
+      <a href="https://platform.pioneerxity.ai/" class="flex w-fit items-center gap-2.5" aria-label="PLANA Hyperspace home">
+        <img src="logo.svg" alt="" class="h-7 w-6 object-contain brightness-0 invert">
+        <span><span class="block text-sm font-bold tracking-tight text-white">PLANA Hyperspace</span></span>
+      </a>
+    </div>
+
+    <div class="relative mx-auto grid min-h-svh max-w-[1480px] lg:grid-cols-[1.08fr_0.92fr]">
+
+      <!-- ── left / marketing ─────────────────────────────────────────── -->
+      <section class="order-2 flex min-h-[31rem] flex-col px-6 py-7 sm:px-10 lg:order-1 lg:min-h-svh lg:px-16 lg:py-10">
+        <div class="hidden lg:block">
+          <a href="https://platform.pioneerxity.ai/" class="flex w-fit items-center gap-2.5" aria-label="PLANA Hyperspace home">
+            <img src="logo.svg" alt="" class="h-7 w-6 object-contain brightness-0 invert">
+            <span><span class="block text-sm font-bold tracking-tight text-white">PLANA Hyperspace</span></span>
+          </a>
+        </div>
+
+        <div class="flex flex-1 items-center py-14 lg:py-0">
+          <div class="ce-wrap">
+            <!-- ── Capture → Extract → Track ─────────────────────────────── -->
+            <h1 class="ce-headline">Accelerating through the barriers that classically impede aerospace development.</h1>
+
+            <ol class="ce-flow" aria-label="How PLANA Hyperspace works">
+
+              <li class="ce-step">
+                <div class="ce-arrow" aria-hidden="true">
+                  <span class="ce-lines"><i></i><i></i></span>
+                  <span class="ce-chevron"><span class="ce-label">Capture</span></span>
+                </div>
+                <p class="ce-title">Channels:</p>
+                <ul class="ce-list">
+                  <li>Email</li>
+                  <li>Chat</li>
+                  <li>Video Meet</li>
+                  <li>Etc.</li>
+                </ul>
+              </li>
+
+              <li class="ce-step">
+                <div class="ce-arrow" aria-hidden="true">
+                  <span class="ce-lines"><i></i><i></i></span>
+                  <span class="ce-chevron"><span class="ce-label">Extract</span></span>
+                </div>
+                <p class="ce-title">Insight Signals:</p>
+                <ul class="ce-list">
+                  <li>Tasks</li>
+                  <li>Decisions</li>
+                  <li>Blockers</li>
+                  <li>Etc.</li>
+                </ul>
+              </li>
+
+              <li class="ce-step">
+                <div class="ce-arrow" aria-hidden="true">
+                  <span class="ce-lines"><i></i><i></i></span>
+                  <span class="ce-chevron"><span class="ce-label">Track</span></span>
+                </div>
+                <p class="ce-title">Status:</p>
+                <ul class="ce-list">
+                  <li>To Do</li>
+                  <li>In Progress</li>
+                  <li>Complete</li>
+                  <li>Etc.</li>
+                </ul>
+              </li>
+
+            </ol>
+          </div>
+        </div>
+
+        <p class="text-xs text-white/25">Built for teams that need the whole picture.</p>
+      </section>
+
+      <!-- ── right / sign-in card ─────────────────────────────────────── -->
+      <section class="order-1 flex items-center border-b border-white/10 px-6 py-10 sm:px-10 lg:order-2 lg:border-b-0 lg:border-l lg:border-t-0 lg:px-16">
+        <div class="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-[#171719]/90 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-9">
+
+          <div class="mb-4 flex items-center" aria-label="PLANA">
+            <img src="Logo-hyperspace-white.png" alt="PLANA" class="h-12 w-auto max-w-[210px] object-contain object-left">
+          </div>
+
+          <div class="mb-8">
+            <h2 class="mt-2 text-3xl font-black tracking-[-0.05em] text-white">Sign in to PLANA Hyperspace</h2>
+            <p class="mt-3 text-sm leading-6 text-white/45">Continue to your workspace intelligence.</p>
+          </div>
+
+          <form class="flex flex-col gap-6" onsubmit="return false">
+            <div class="grid gap-4">
+              <div class="grid gap-3">
+                <label data-slot="label" for="email" class="flex items-center gap-2 select-none text-xs font-semibold uppercase tracking-[0.12em] text-white/55 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">Email</label>
+                <input type="email" id="email" name="email" data-slot="input" autocomplete="email" placeholder="you@company.com" required
+                  class="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/[0.04] px-3 py-1 text-base text-white shadow-xs outline-none transition-[color,box-shadow] selection:bg-primary selection:text-primary-foreground placeholder:text-white/25 focus-visible:border-[#e56203]/70 focus-visible:ring-[3px] focus-visible:ring-[#e56203]/25 aria-invalid:border-destructive aria-invalid:ring-destructive/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40">
+              </div>
+              <div class="grid gap-3">
+                <div>
+                  <label data-slot="label" for="password" class="flex items-center gap-2 select-none text-xs font-semibold uppercase tracking-[0.12em] text-white/55 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">Password</label>
+                </div>
+                <input type="password" id="password" name="password" data-slot="input" autocomplete="current-password" required
+                  class="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/[0.04] px-3 py-1 text-base text-white shadow-xs outline-none transition-[color,box-shadow] selection:bg-primary selection:text-primary-foreground placeholder:text-white/25 focus-visible:border-[#e56203]/70 focus-visible:ring-[3px] focus-visible:ring-[#e56203]/25 aria-invalid:border-destructive aria-invalid:ring-destructive/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40">
+              </div>
+
+              <button type="submit" data-slot="button" data-variant="default" data-size="default"
+                class="hv-grad inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-bold outline-none transition-all focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:border-destructive aria-invalid:ring-destructive/20 disabled:pointer-events-none disabled:opacity-50 has-[>svg]:px-3 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 dark:aria-invalid:ring-destructive/40">Login</button>
+            </div>
+
+            <div class="text-center text-sm text-white/40">Need access? <a href="https://platform.pioneerxity.ai/en/signup" class="font-medium text-[#f18a42] underline-offset-4 hover:underline">Request access</a></div>
+
+            <p class="text-center text-[11px] leading-5 text-white/25">By signing in, you agree to our <a href="https://platform.pioneerxity.ai/en/terms-of-service" class="underline underline-offset-4 hover:text-white/60">Terms of Service</a> and <a href="https://platform.pioneerxity.ai/en/privacy-policy" class="underline underline-offset-4 hover:text-white/60">Privacy Policy</a>.</p>
+          </form>
+
+          <a href="https://platform.pioneerxity.ai/en/tutorial" target="_blank" rel="noopener noreferrer" class="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.025] text-sm font-medium text-white/70 transition-colors hover:border-[#e56203]/50 hover:bg-[#e56203]/10 hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open h-4 w-4 text-[#f18a42]" aria-hidden="true"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg>Tutorial<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right h-3.5 w-3.5 text-[#f18a42]" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg>
+          </a>
+
+          <a href="https://platform.pioneerxity.ai/privacy-policy" class="mt-7 flex items-center justify-center gap-1 text-[11px] text-white/25 transition-colors hover:text-white/55">Privacy and security <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right h-3 w-3" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a>
+
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+<!-- ── Floating "Watch the intro" button (reopens the modal) ─────────────────────── -->
+<button type="button" class="hv-fab" id="introFab" aria-haspopup="dialog" aria-controls="introModal">
+  <span class="hv-fab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 6 4.5z"/></svg></span>
+  Watch the intro
+</button>
+
+<!-- ── Intro video modal (auto-opens; see .hv-* styles) ─────────────────────────── -->
+<div class="hv-modal" id="introModal" role="dialog" aria-modal="true" aria-labelledby="introTitle" aria-describedby="introSub" hidden>
+  <div class="hv-backdrop" data-hv-close></div>
+  <div class="hv-panel">
+    <div class="hv-head">
+      <div>
+        <span class="hv-eyebrow"><i></i>Hyperspace Beta</span>
+        <h2 class="hv-title" id="introTitle">Welcome to PLANA Hyperspace</h2>
+        <p class="hv-sub" id="introSub">A quick look at what the beta does before you sign in.</p>
+      </div>
+      <button type="button" class="hv-close" data-hv-close aria-label="Close intro video">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+    </div>
+
+    <div class="hv-stage">
+      <video id="introVideo" src="hyperspace_beta_intro_video.mp4" playsinline preload="auto" controls controlslist="nodownload"></video>
+      <button type="button" class="hv-unmute" id="introUnmute" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><path d="M16 9a5 5 0 0 1 0 6"></path><path d="M19.364 18.364a9 9 0 0 0 0-12.728"></path></svg>
+        Tap for sound
+      </button>
+    </div>
+
+    <div class="hv-foot">
+      <span class="hv-meta">Intro video · 1 min 48 sec</span>
+      <button type="button" class="hv-skip" data-hv-close>Skip intro
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var modal  = document.getElementById('introModal');
+  var video  = document.getElementById('introVideo');
+  var unmute = document.getElementById('introUnmute');
+  var closeBtn = modal.querySelector('.hv-close');
+  var lastFocus = null;
+
+  function open() {
+    lastFocus = document.activeElement;
+    if (video.ended) video.currentTime = 0;   // reopened after finishing → start over
+    modal.hidden = false;
+    document.body.classList.add('hv-open');
+    closeBtn.focus({ preventScroll: true });
+
+    // Try autoplay with sound first; browsers usually refuse until the user has
+    // interacted with the page, in which case fall back to muted autoplay and
+    // offer a one-tap unmute.
+    video.muted = false;
+    var p = video.play();
+    if (p && p.catch) {
+      p.catch(function () {
+        video.muted = true;
+        unmute.hidden = false;
+        video.play().catch(function () {});
+      });
+    }
+  }
+
+  function close() {
+    if (modal.hidden) return;
+    video.pause();
+    modal.hidden = true;
+    document.body.classList.remove('hv-open');
+    var email = document.getElementById('email');
+    (email || lastFocus || document.body).focus({ preventScroll: true });
+  }
+
+  unmute.addEventListener('click', function () {
+    video.muted = false;
+    unmute.hidden = true;
+    video.play().catch(function () {});
+  });
+  video.addEventListener('volumechange', function () { if (!video.muted) unmute.hidden = true; });
+  video.addEventListener('ended', close);
+
+  modal.querySelectorAll('[data-hv-close]').forEach(function (el) { el.addEventListener('click', close); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+
+  // Keep keyboard focus inside the dialog while it is open.
+  modal.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var f = modal.querySelectorAll('button:not([hidden]), video, [href]');
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  document.getElementById('introFab').addEventListener('click', open);
+
+  // Auto-open on load. To show it only once per browser session instead, swap the
+  // line below for:
+  //   if (!sessionStorage.getItem('hvIntroSeen')) { open(); sessionStorage.setItem('hvIntroSeen','1'); }
+  open();
+})();
+</script>
+</body>
+</html>
