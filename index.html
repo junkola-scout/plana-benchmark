@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" style="color-scheme: dark;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLANA Intelligence Operating System</title>
+
+<!--
+  =========================================================================
+  PLANA KMS ERP — table of contents for the prototype repository.
+
+  Lists every working file in the five top-level folders (document-manager,
+  acquisition, capture-companion, due-diligence, platform) and links to each one by
+  relative path, so it works both on GitHub Pages and from a local copy.
+
+  GATE: the password check is cosmetic, not security. This file is served
+  publicly and its source is readable by anyone — the SHA-256 constant
+  below only keeps the password out of plain sight. Do not treat this as
+  access control for anything genuinely sensitive.
+  =========================================================================
+-->
+
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0f0f10">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============ Brand tokens (from company palette) ============
+   #e50602 red · #e56203 orange · #414042 gray · #000 · #fff   */
+:root{
+  --brand-red:#e50602;
+  --brand-orange:#e56203;
+  --brand-gray:#414042;
+  --bg:#0f0f10;
+  --surface:#1a1a1c;
+  --raised:#232326;
+  --line:#39383b;
+  --line-strong:#525155;
+  --text:#ffffff;
+  --muted:#a8a7ac;
+  --faint:#7c7b80;
+  --focus:#e56203;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px}
+body{
+  min-height:100vh;
+  font-family:"Google Sans","Google Sans Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(2400px 850px at 50% 122%,
+      rgba(229,6,2,.38) 0%, rgba(229,62,3,.18) 30%, rgba(229,98,3,.07) 52%, transparent 72%),
+    var(--bg);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ============ Logo lockup ============ */
+.lockup{display:flex;align-items:center;gap:10px}
+.lockup svg{width:22px;height:22px;display:block}
+.lockup .logo-hs{display:block;height:38px;width:auto;margin-left:-4px}
+.lockup .word{
+  font-size:1.0625rem;font-weight:500;letter-spacing:.28em;
+  text-transform:uppercase;line-height:1;padding-left:.06em;
+}
+
+/* ============ Gate ============ */
+.gate{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.gate-card{
+  width:100%;max-width:420px;background:var(--surface);
+  border:1px solid var(--line);border-radius:16px;padding:28px 28px 24px;
+  box-shadow:0 24px 60px rgba(0,0,0,.55);
+}
+.gate-card .lockup{margin-bottom:22px}
+.gate h1{font-size:1.375rem;font-weight:600;letter-spacing:-.01em;margin-bottom:8px}
+.gate p.sub{color:var(--muted);font-size:.9375rem;line-height:1.55;margin-bottom:22px}
+label{display:block;font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:8px}
+input[type=password]{
+  width:100%;padding:13px 14px;background:var(--bg);color:var(--text);
+  border:1px solid var(--line);border-radius:10px;font-size:.9375rem;
+  font-family:inherit;transition:border-color .15s;
+}
+input[type=password]::placeholder{color:var(--faint)}
+input[type=password]:focus{outline:none;border-color:var(--focus)}
+.btn{
+  width:100%;margin-top:14px;padding:13px 16px;border:0;border-radius:10px;
+  background:var(--text);color:#000;font-family:inherit;font-size:.9375rem;
+  font-weight:600;cursor:pointer;transition:opacity .15s;
+}
+.btn:hover{opacity:.88}
+.err{
+  display:none;margin-top:12px;font-size:.8125rem;color:var(--brand-red);
+}
+.err.show{display:block}
+.gate .note{
+  margin-top:18px;padding-top:16px;border-top:1px solid var(--line);
+  font-size:.75rem;color:var(--faint);line-height:1.5;
+}
+
+/* ============ Contents ============ */
+#toc{display:none;padding:0 24px 72px}
+#toc.show{display:block}
+header.bar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:22px 0 0;max-width:1040px;margin:0 auto 44px;
+}
+.eyebrow{
+  font-size:.6875rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);
+}
+.hero{max-width:1040px;margin:0 auto 40px}
+.hero h1{
+  font-size:2.25rem;font-weight:600;letter-spacing:-.02em;line-height:1.15;margin-bottom:12px;
+}
+.hero p{color:var(--muted);font-size:1.0625rem;line-height:1.6;max-width:64ch}
+.wrap{max-width:1040px;margin:0 auto}
+
+section.folder{margin-bottom:40px}
+.folder-head{
+  display:flex;align-items:baseline;gap:12px;
+  padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--line);
+}
+.folder-head h2{font-size:1.0625rem;font-weight:600;letter-spacing:-.005em}
+.folder-head code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.75rem;color:var(--faint);
+}
+.folder-head .count{margin-left:auto;font-size:.75rem;color:var(--faint)}
+
+.cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+a.card{
+  display:block;text-decoration:none;color:inherit;background:var(--surface);
+  border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;
+  transition:background .15s,border-color .15s,transform .15s;
+}
+a.card:hover{background:var(--raised);border-color:var(--line-strong);transform:translateY(-1px)}
+a.card:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.card .tag{
+  display:inline-block;font-size:.625rem;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--brand-orange);margin-bottom:9px;
+}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:7px;letter-spacing:-.005em}
+.card p{color:var(--muted);font-size:.875rem;line-height:1.55;margin-bottom:12px}
+.card .path{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.6875rem;color:var(--faint);word-break:break-all;
+}
+footer{
+  max-width:1040px;margin:56px auto 0;padding-top:20px;border-top:1px solid var(--line);
+  font-size:.75rem;color:var(--faint);line-height:1.6;
+}
+@media (max-width:640px){
+  .hero h1{font-size:1.75rem}
+  .cards{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================== GATE ============================== -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="lockup">
+      <img class="logo-hs" src="platform/Logo_Hyperspace_White_Beta.png" alt="PLANA Hyperspace Beta">
+    </div>
+
+    <h1>Intelligence Operating System</h1>
+    <p class="sub">This index is restricted. Enter the access password to view the contents.</p>
+
+    <form id="gate-form" autocomplete="off">
+      <label for="pw">Password</label>
+      <input type="password" id="pw" placeholder="Enter password" autocomplete="off" autofocus>
+      <button class="btn" type="submit">Unlock &rarr;</button>
+      <div class="err" id="err">Incorrect password. Try again.</div>
+    </form>
+
+    <p class="note">
+      This gate runs in the browser and is a convenience screen, not access control.
+      Anyone who views the page source can bypass it &mdash; keep anything genuinely
+      confidential off this repository.
+    </p>
+  </div>
+</div>
+
+<!-- ============================ CONTENTS ============================ -->
+<div id="toc">
+  <header class="bar">
+    <div class="lockup">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e50602"/><stop offset="1" stop-color="#e56203"/></linearGradient></defs><polygon fill="url(#lg2)" points="12,.5 13.25,9.83 19.97,7.4 14.5,12 19.97,16.6 13.25,14.17 12,23.5 10.75,14.17 4.03,16.6 9.5,12 4.03,7.4 10.75,9.83"/></svg>
+      <span class="word">Plana</span>
+    </div>
+    <span class="eyebrow">KMS &middot; ERP</span>
+  </header>
+
+  <div class="hero">
+    <h1>PLANA KMS ERP</h1>
+    <p>
+      Table of contents for the prototype repository. Seven working files across five
+      workstreams &mdash; each link opens the page directly.
+    </p>
+  </div>
+
+  <div class="wrap">
+
+    <section class="folder">
+      <div class="folder-head">
+        <h2>Document Manager</h2>
+        <code>/document-manager</code>
+        <span class="count">1 file</span>
+      </div>
+      <div class="cards">
+        <a class="card" href="document-manager/document-manager.html">
+          <span class="tag">Hyperspace tool</span>
+          <h3>Document Manager</h3>
+          <p>Engineering deliverable tracker &mdash; Kanban (Work in progress &rarr; Braden to review &rarr; Released),
+             versioning by Hyperspace ID with change summaries, multi-parent assembly tree with completeness roll-up,
+             hierarchy levels, RACI ownership, and a &ldquo;since last review&rdquo; mode for the bi-weekly.</p>
+          <span class="path">document-manager/document-manager.html</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="folder">
+      <div class="folder-head">
+        <h2>Capture Companion</h2>
+        <code>/capture-companion</code>
+        <span class="count">1 file</span>
+      </div>
+      <div class="cards">
+        <a class="card" href="capture-companion/capturecompanion.html">
+          <span class="tag">Side Panel</span>
+          <h3>Capture Companion</h3>
+          <p>Always-on-top capture panel &mdash; session ledger, region grabs, dropped files
+             and typed asides, each stamped against the session transcript.</p>
+          <span class="path">capture-companion/capturecompanion.html</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="folder">
+      <div class="folder-head">
+        <h2>Due Diligence</h2>
+        <code>/due-diligence</code>
+        <span class="count">2 files</span>
+      </div>
+      <div class="cards">
+        <!-- DEMO INVITE: the portal is invite-only and shows a wall unless the
+             URL carries ?invite=<token> (see handleInviteGate() in the portal).
+             This card ships a demo invite so reviewers land on the pre-filled
+             sign-up card instead of the wall. Strip the query string once real
+             server-side invite tokens are in place. -->
+        <a class="card" href="due-diligence/due-diligence-answer-engine.html?invite=demo&amp;iname=Scout%20Underwood&amp;iemail=scout.underwood@plana.aero&amp;irole=Investor/lender&amp;iby=Duc">
+          <span class="tag">Investor Portal</span>
+          <h3>Due Diligence Answer Engine</h3>
+          <p>Plans.aero investor data room &mdash; chat, search, browse FAQ and my questions,
+             running against the local seed data. Opens with a demo invite so it
+             skips the invite-only wall.</p>
+          <span class="path">due-diligence/due-diligence-answer-engine.html?invite=demo&hellip;</span>
+        </a>
+        <a class="card" href="due-diligence/dd-admin.html">
+          <span class="tag">Internal Admin</span>
+          <h3>Due Diligence Admin</h3>
+          <p>The deal-team side inside PLANA Brain &mdash; answer pending investor questions,
+             publish to the data room, and manage invites.</p>
+          <span class="path">due-diligence/dd-admin.html</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="folder">
+      <div class="folder-head">
+        <h2>Platform</h2>
+        <code>/platform</code>
+        <span class="count">2 files</span>
+      </div>
+      <div class="cards">
+        <a class="card" href="platform/platform.html">
+          <span class="tag">Company Brain</span>
+          <h3>PLANA Company Brain</h3>
+          <p>The platform shell &mdash; chat, insights and calendar over the workspace, with
+             answers traced, grounded and cited back to source.</p>
+          <span class="path">platform/platform.html</span>
+        </a>
+        <a class="card" href="platform/login.html">
+          <span class="tag">Sign In</span>
+          <h3>Hyperspace Login</h3>
+          <p>The way in &mdash; PLANA Hyperspace lockup, the workspace-intelligence rail and
+             the credential card, built on the live platform markup.</p>
+          <span class="path">platform/login.html</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="folder">
+      <div class="folder-head">
+        <h2>Acquisition</h2>
+        <code>/acquisition</code>
+        <span class="count">1 file</span>
+      </div>
+      <div class="cards">
+        <a class="card" href="acquisition/acquisition-doc-studio.html">
+          <span class="tag">Doc Studio</span>
+          <h3>Acquisition Doc Studio</h3>
+          <p>Program knowledge base for controlled documents &mdash; currency and conflict
+             tracking, artifact templates, brief editor, release and export.</p>
+          <span class="path">acquisition/acquisition-doc-studio.html</span>
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      Prototypes and wireframes. Links are relative, so this index works on GitHub Pages
+      and from a local clone alike.
+    </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* SHA-256 of the access password. Obfuscation only — see the note in the gate. */
+  var HASH = "d1b2a59fbea7e20077af9f91b27e95e865061b270be03ff539ab3b73587882e8";
+
+  var form = document.getElementById("gate-form");
+  var pw   = document.getElementById("pw");
+  var err  = document.getElementById("err");
+  var gate = document.getElementById("gate");
+  var toc  = document.getElementById("toc");
+
+  function sha256(str){
+    var bytes = new TextEncoder().encode(str);
+    return crypto.subtle.digest("SHA-256", bytes).then(function(buf){
+      return Array.from(new Uint8Array(buf)).map(function(b){
+        return b.toString(16).padStart(2, "0");
+      }).join("");
+    });
+  }
+
+  function unlock(){
+    gate.style.display = "none";
+    toc.classList.add("show");
+    document.title = "PLANA Intelligence Operating System";
+    window.scrollTo(0, 0);
+  }
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    err.classList.remove("show");
+    sha256(pw.value).then(function(h){
+      if (h === HASH) { unlock(); }
+      else { err.classList.add("show"); pw.select(); }
+    }).catch(function(){
+      /* crypto.subtle needs a secure context (https or localhost) */
+      err.textContent = "Password check unavailable — open this page over https.";
+      err.classList.add("show");
+    });
+  });
+
+  pw.addEventListener("input", function(){ err.classList.remove("show"); });
+})();
+</script>
+</body>
+</html>

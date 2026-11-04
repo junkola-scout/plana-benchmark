@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Document Manager — PLANA Hyperspace</title>
+<link rel="icon" href="../platform/logo.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../shared/plana.css">
+<style>
+/* ===== Document Manager — page-specific (everything else comes from shared/plana.css) ===== */
+
+/* toolbar under the topbar */
+.dm-bar{display:flex;align-items:center;gap:12px;padding:10px var(--gutter);border-bottom:1px solid var(--line);
+  background:var(--bg);position:sticky;top:55px;z-index:calc(var(--z-sticky) - 1);flex-wrap:wrap}
+.dm-bar .search{position:relative;min-width:170px;flex:1;max-width:260px}
+.dm-bar .dm-filters select.quiet{padding-left:5px;padding-right:15px}
+@media(max-width:1380px){.dm-bar .dm-filters .qsep{display:none}}
+.dm-bar .search input{min-height:var(--ctl-h);padding-left:30px;background:var(--surface)}
+.dm-bar .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.dm-filters{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+/* "since last review" toggle */
+.review-toggle{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);border-radius:var(--r-lg);
+  padding:0 10px 0 12px;min-height:var(--ctl-h);font-size:var(--fs-sm);color:var(--muted);background:var(--surface)}
+.review-toggle:hover{color:var(--text)}
+.review-toggle[aria-pressed="true"]{border-color:var(--brand-orange);color:var(--brand-orange);font-weight:600}
+.review-toggle select.quiet{min-height:24px;padding:2px 15px 2px 4px;font-size:var(--fs-xs)}
+.review-toggle .qf::after{right:2px}
+
+/* review summary strip */
+.review-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 16px}
+.review-strip .stat{padding:11px 14px;border-color:rgba(229,98,3,.35)}
+.review-strip .stat .n{font-size:22px}
+.review-strip .stat.pkg{grid-column:span 2}
+.review-strip .stat.pkg .n{font-size:var(--fs-lg);font-weight:700}
+.review-strip .bar{height:4px;border-radius:2px;background:var(--line);margin-top:8px;overflow:hidden}
+.review-strip .bar i{display:block;height:100%;background:var(--grad-brand-h)}
+
+/* ===== Kanban board ===== */
+.board{display:grid;grid-template-columns:repeat(3,minmax(280px,1fr));gap:14px;align-items:start}
+@media(max-width:980px){.board{grid-template-columns:1fr;}}
+.col-kb{background:rgba(26,26,28,.55);border:1px solid var(--line);border-radius:var(--r-2xl);padding:10px;min-height:320px;
+  transition:border-color .15s,background .15s}
+.col-kb.over{border-color:var(--brand-orange);background:rgba(229,98,3,.05)}
+.col-head{display:flex;align-items:center;gap:8px;padding:6px 8px 10px}
+.col-head h3{font-size:var(--fs-xs);letter-spacing:.09em;text-transform:uppercase;font-weight:800;color:var(--muted);flex:1}
+.col-head .count{font-size:var(--fs-label)}
+.col-kb[data-col="review"] .col-head h3{color:var(--brand-orange)}
+.col-kb[data-col="released"] .col-head h3{color:#7bd88f}
+.col-head .gloss{font-size:var(--fs-micro);color:var(--faint);font-style:italic}
+.col-body{display:flex;flex-direction:column;gap:8px;min-height:60px}
+.col-body .empty{padding:22px 12px;font-size:var(--fs-sm)}
+
+/* doc card */
+.doc{background:var(--grad-card);border:1px solid var(--line);border-radius:var(--r-xl);padding:12px 12px 10px;
+  cursor:pointer;position:relative;transition:border-color .12s,opacity .2s,transform .12s}
+.doc:hover{border-color:var(--line-strong)}
+.doc:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.doc.dragging{opacity:.4;transform:scale(.98)}
+.doc .d-top{display:flex;align-items:flex-start;gap:8px}
+.doc .ftype{width:30px;height:30px;border-radius:var(--r-sm);display:grid;place-items:center;flex-shrink:0;
+  font-size:9.5px;font-weight:800;letter-spacing:.04em;border:1px solid var(--line-strong);color:var(--muted);background:var(--surface-lo)}
+.doc .ftype.pdf{color:#ff8a86;border-color:rgba(229,6,2,.45)}
+.doc .ftype.gdoc{color:#8ab4f8;border-color:rgba(138,180,248,.4)}
+.doc .ftype.gsheet{color:#7bd88f;border-color:rgba(63,185,80,.4)}
+.doc .ftype.cad{color:var(--brand-amber);border-color:rgba(241,138,66,.45)}
+.doc h4{font-size:var(--fs-md);font-weight:600;line-height:1.35;flex:1;min-width:0}
+.doc .ver{font-family:var(--font-mono);font-size:var(--fs-micro);color:var(--muted);background:var(--raised);
+  border-radius:var(--r-xs);padding:2px 5px;flex-shrink:0;letter-spacing:.04em}
+.doc .d-meta{display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap}
+.doc .chip{font-size:var(--fs-label);min-height:20px;padding:2px 7px}
+.doc .d-foot{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
+.doc .d-foot .when{font-size:var(--fs-label)}
+.doc .d-foot .serial{position:static;padding:0;margin-left:auto}
+/* aerospace hierarchy level chip: L1 aircraft → L4 component. One accent that fades with depth. */
+.chip.lvl{border:1px solid var(--line-strong);color:var(--text);font-weight:600;padding-left:4px;gap:6px}
+.chip.lvl i{font-style:normal;font-family:var(--font-mono);font-size:9.5px;font-weight:800;letter-spacing:.04em;
+  border-radius:3px;padding:1px 4px;background:var(--raised);color:var(--muted)}
+.chip.lvl-aircraft i{background:var(--grad-brand);color:#fff}
+.chip.lvl-system i{background:rgba(229,98,3,.22);color:var(--brand-amber)}
+.chip.lvl-subsystem i{background:rgba(229,98,3,.1);color:var(--brand-amber)}
+.chip.lvl-component i{background:var(--raised);color:var(--muted)}
+.chip.lvl.sm{font-size:10px;min-height:18px;padding:1px 6px 1px 3px}
+.chip.lvl.sm i{font-size:8.5px;padding:0 3px}
+/* Braden's approval control — only rendered when acting as Braden, only on cards in his queue */
+.approve-row{display:flex;gap:6px;align-items:center;margin-top:10px}
+.drawer-approve{margin:0 0 14px;padding-top:4px}
+.drawer-approve .btn-approve{min-height:var(--ctl-h-lg);font-size:var(--fs-md)}
+.btn-approve{flex:1;justify-content:center;background:rgba(63,185,80,.12);border-color:var(--success);color:#7bd88f;font-weight:700}
+.btn-approve:hover{background:var(--success);color:#04140a;border-color:var(--success)}
+/* archive: low-key, footer-left; archived cards only show in the archived view */
+.archive-btn{color:var(--faint);border-color:transparent;margin-right:auto}
+.archive-btn:hover{color:var(--danger);background:var(--raised)}
+.ovl-foot .who{flex:1}
+.doc.archived{opacity:.7;border-style:dashed}
+/* assembly roll-up */
+.rollup{display:flex;align-items:center;gap:6px;font-size:var(--fs-label);color:var(--muted);margin-top:8px}
+.rollup .bar{flex:1;height:3px;border-radius:2px;background:var(--line);overflow:hidden;max-width:110px}
+.rollup .bar i{display:block;height:100%;background:var(--brand-orange)}
+.rollup.done .bar i{background:var(--success)}
+.rollup.done{color:#7bd88f}
+.doc.flagged{border-color:rgba(229,6,2,.55)}
+.doc.flagged::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--r-xl) 0 0 var(--r-xl);background:var(--grad-brand-v)}
+.flag{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-label);font-weight:700;color:var(--danger)}
+/* review mode highlighting */
+.board.reviewing .doc:not(.changed){opacity:.32}
+.board.reviewing .doc.changed{border-color:var(--brand-orange);box-shadow:0 0 0 1px rgba(229,98,3,.25)}
+.doc .delta{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-label);font-weight:700;color:var(--brand-orange)}
+.table.reviewing tr:not(.changed) td{opacity:.4}
+
+/* ===== table view ===== */
+.table td .ftype{display:inline-grid;place-items:center;width:26px;height:22px;border-radius:var(--r-xs);font-size:9px;font-weight:800;
+  border:1px solid var(--line-strong);color:var(--muted);margin-right:8px;vertical-align:middle}
+.table .st{display:inline-flex;align-items:center;gap:6px}
+.st .status-dot.wip{background:var(--line-strong)}
+.st .status-dot.review{background:var(--brand-orange)}
+.st .status-dot.released{background:var(--success)}
+
+/* ===== detail drawer ===== */
+.drawer{width:min(600px,100vw)}
+.drawer .ovl-head{align-items:center}
+.drawer .ovl-head .ftype{width:36px;height:36px;border-radius:var(--r-md);display:grid;place-items:center;font-size:10px;font-weight:800;
+  border:1px solid var(--line-strong);color:var(--muted);flex-shrink:0;background:var(--surface-lo)}
+.drawer .ovl-head h5{font-size:var(--fs-xl)}
+.drawer .ovl-head .serial{display:block;margin-top:3px}
+.dsec{margin-bottom:22px}
+.dsec .dx-h{margin-bottom:8px}
+.dsec .dx-h .count{margin-left:2px}
+.acc .dx-h{margin-bottom:0;padding:8px 0;border-top:1px solid var(--line)}
+.acc{margin-bottom:4px}
+.acc-tog{display:inline-flex;align-items:center;gap:7px;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;padding:2px 4px 2px 0;border-radius:var(--r-xs)}
+.acc-tog:hover{color:var(--text)}
+.acc-tog .caret{transform:rotate(-90deg)}
+.acc-tog[aria-expanded="true"] .caret{transform:none}
+.acc-tog[aria-expanded="true"]{color:var(--text)}
+.acc-body{padding:4px 0 14px}
+.dx-row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.dx-l{width:22px;height:22px;border-radius:6px;border:1px solid var(--line-strong);color:var(--muted);font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.dx-role{font-size:var(--fs-xs);color:var(--faint);width:92px;flex:none}
+.dx-who{font-size:var(--fs-md);color:var(--text);font-weight:600}
+.dx-who .has-tip{cursor:default}
+.dx-note{font-size:10.5px;color:var(--faint);margin-top:8px;line-height:1.5}
+.acc .dx-h .chip.prov-ico{font-size:13px;margin-left:2px}
+.raci-edit .tagf{min-height:34px;position:relative}
+.raci-edit .pick-list{left:0;right:0}
+.raci-edit .pick-list .avatar.sm{width:20px;height:20px;font-size:8px}
+.desc-text{font-size:var(--fs-md);color:var(--text);line-height:1.65;white-space:pre-wrap;max-width:70ch}
+.dsec .dx-h .btn-link{margin-left:auto;text-transform:none;letter-spacing:0;font-size:var(--fs-label);font-weight:600}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:var(--fs-sm)}
+.kv dt{color:var(--faint);font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding-top:2px}
+.kv dd{color:var(--text)}
+.kv dd .muted{margin-left:6px}
+.sync-row{display:flex;gap:6px;flex-wrap:wrap}
+.sync-row .chip{gap:6px}
+/* status stepper */
+.steps{display:flex;gap:6px}
+.steps button{flex:1;border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:9px 8px;font-size:var(--fs-xs);font-weight:600;color:var(--muted);
+  background:none;text-align:center;line-height:1.3}
+.steps button:hover{border-color:var(--muted);color:var(--text)}
+.steps button[aria-pressed="true"]{border-color:var(--brand-orange);color:var(--brand-orange);font-weight:700;background:rgba(229,98,3,.07)}
+.steps button[data-col="released"][aria-pressed="true"]{border-color:var(--success);color:#7bd88f;background:rgba(63,185,80,.07)}
+.steps button:disabled{opacity:.4;cursor:not-allowed}
+.steps button small{display:block;font-weight:500;font-size:var(--fs-micro);color:var(--faint);margin-top:2px}
+/* version timeline */
+.vlist{position:relative;padding-left:22px}
+.vlist::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:1px;background:var(--line)}
+.vitem{position:relative;padding:0 0 16px}
+.vitem:last-child{padding-bottom:0}
+.vitem::before{content:"";position:absolute;left:-19px;top:6px;width:9px;height:9px;border-radius:50%;background:var(--line-strong);border:2px solid var(--surface)}
+.vitem.current::before{background:var(--brand-orange);box-shadow:0 0 0 3px rgba(229,98,3,.2)}
+.vitem .v-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vitem .vn{font-family:var(--font-mono);font-size:var(--fs-xs);font-weight:700;color:var(--text)}
+.vitem.current .vn{color:var(--brand-orange)}
+.vitem .fname{font-family:var(--font-mono);font-size:var(--fs-label);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.vitem .vnote{font-size:var(--fs-sm);color:var(--text);margin-top:5px;line-height:1.55}
+.vitem .vby{font-size:var(--fs-label);color:var(--faint);margin-top:4px;display:flex;gap:6px;align-items:center}
+.vitem .btn-sm{min-height:24px;padding:0 8px;font-size:var(--fs-label);margin-left:auto}
+/* assembly tree */
+.tree{font-size:var(--fs-sm)}
+.tnode{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r-md);min-height:32px}
+.tnode:hover{background:var(--raised)}
+.tnode.self{background:rgba(229,98,3,.08);border:1px solid rgba(229,98,3,.35)}
+.tnode .tog{width:16px;color:var(--muted);font-size:10px;text-align:center;flex-shrink:0;background:none;border:none;padding:0;cursor:pointer}
+.tnode .tog.leaf{visibility:hidden}
+.tnode .tog .caret{transform:rotate(-90deg)}
+.tnode .tog[aria-expanded="true"] .caret{transform:none}
+.tnode .tname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);cursor:pointer}
+.tnode .tname:hover{text-decoration:underline;text-underline-offset:3px}
+.tnode .serial{flex-shrink:0}
+.lvl-pick{display:inline-flex;align-items:center;gap:6px;padding:2px 6px 2px 2px;border-radius:var(--r-md);border:1px solid transparent}
+.lvl-pick:hover,.lvl-pick[aria-expanded="true"]{border-color:var(--line-strong);background:var(--raised)}
+.lvl-pick .caret{font-size:10px}
+.lvl-cap{display:inline-flex;align-items:center;gap:6px;margin-left:10px;font-size:var(--fs-label);color:var(--faint);vertical-align:middle;white-space:nowrap}
+.lvl-cap b{color:var(--muted);font-weight:600}
+#dLvlMenu{min-width:190px}
+#dLvlMenu button{display:flex;align-items:center;gap:8px}
+#dLvlMenu button[aria-checked="true"]{color:var(--brand-orange)}
+#dLvlMenu button[aria-checked="true"]::before{content:none}
+#dLvlMenu button[aria-checked="true"]::after{content:"✓";margin-left:auto;font-weight:700}
+.lvl-dot{font-style:normal;font-family:var(--font-mono);font-size:9px;font-weight:800;color:var(--muted);background:var(--raised);border-radius:3px;padding:1px 4px;flex-shrink:0}
+.tnode .lvl-dot{font-style:normal;font-family:var(--font-mono);font-size:9px;font-weight:800;color:var(--muted);background:var(--raised);border-radius:3px;padding:1px 4px;flex-shrink:0}
+.tnode .chip{font-size:10px;min-height:18px;padding:1px 6px}
+.tkids{margin-left:14px;padding-left:10px;border-left:1px dashed var(--line)}
+.tkids[hidden]{display:none}
+.tree .parents{margin-bottom:6px}
+.link-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0 10px;margin-bottom:6px;border-bottom:1px dashed var(--line)}
+.link-row .input{min-height:var(--ctl-h-lg)}
+.link-row .hint{flex-basis:100%;margin-top:0}
+.unlink{opacity:0;color:var(--faint);font-size:10px;padding:2px 5px;border-radius:var(--r-xs);line-height:1;flex-shrink:0}
+.tnode:hover .unlink,.unlink:focus-visible{opacity:1}
+.unlink:hover{color:var(--brand-red);background:var(--raised)}
+.tree .parents .tnode{color:var(--muted)}
+.tree .lbl{font-size:var(--fs-micro);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700;padding:4px 8px}
+.rollup-line{font-size:var(--fs-sm);color:var(--muted);padding:8px 10px;border:1px dashed var(--line-strong);border-radius:var(--r-lg);margin-top:8px;line-height:1.5}
+.rollup-line b{color:var(--text)}
+.rollup-line.ok{border-color:rgba(63,185,80,.45);color:#7bd88f}
+.rollup-line.flag{border-color:rgba(229,6,2,.45);background:rgba(229,6,2,.06);color:var(--danger)}
+/* history */
+.hist{font-size:var(--fs-xs);color:var(--muted);line-height:1.7}
+.hist b{color:var(--text);font-weight:600}
+.hist .when{margin-left:6px;color:var(--faint)}
+
+/* ===== upload modal ===== */
+.drop{border:2px dashed var(--line-strong);border-radius:var(--r-xl);padding:22px;text-align:center;color:var(--muted);font-size:var(--fs-sm);
+  cursor:pointer;transition:border-color .15s,background .15s;background:var(--surface-lo)}
+.drop:hover,.drop.over{border-color:var(--brand-orange);background:rgba(229,98,3,.05);color:var(--text)}
+.drop b{display:block;color:var(--text);font-size:var(--fs-md);margin-bottom:3px}
+.drop .file{display:inline-flex;align-items:center;gap:8px;margin-top:8px;font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--text)}
+.drop .file .tx{color:var(--faint);cursor:pointer}
+.drop .file .tx:hover{color:var(--brand-red)}
+.pick-wrap{position:relative}
+.pick-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;background:var(--raised);border:1px solid var(--line-strong);
+  border-radius:var(--r-lg);box-shadow:var(--sh-menu);max-height:200px;overflow:auto;padding:5px;display:none}
+.pick-list.open{display:block}
+.pick-list button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 9px;border-radius:var(--r-sm);font-size:var(--fs-sm);min-height:32px}
+.pick-list button:hover{background:var(--surface)}
+.pick-list button .serial{margin-left:auto}
+.auto-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 14px;background:var(--surface-lo);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px 12px;margin-top:4px}
+.auto-meta div{font-size:var(--fs-xs);color:var(--muted)}
+.auto-meta b{display:block;color:var(--text);font-weight:600;font-family:var(--font-mono);font-size:var(--fs-xs)}
+.auto-meta .l{font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.mode-switch .seg{width:100%}
+.mode-switch .seg button{flex:1}
+/* success state inside the modal */
+.pipe{display:flex;align-items:center;gap:0;margin:14px 0 4px;flex-wrap:wrap;row-gap:10px}
+.pipe .node{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:76px;font-size:var(--fs-label);color:var(--muted);text-align:center}
+.pipe .node i{width:26px;height:26px;border-radius:50%;border:1px solid var(--line-strong);display:grid;place-items:center;font-style:normal;font-size:11px;color:var(--muted);background:var(--surface-lo)}
+.pipe .node.ok i{border-color:var(--success);color:#7bd88f}
+.pipe .node.ok{color:var(--text)}
+.pipe .arrow{width:14px;height:1px;background:var(--line-strong);margin-bottom:18px}
+.pipe .node i .spinner{width:11px;height:11px;border-width:1.5px}
+
+/* acting-as role switch (demo control — lets Duc see each role's view) */
+.role{display:flex;align-items:center;gap:6px;font-size:var(--fs-label);color:var(--faint);letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.role .seg button{min-height:var(--ctl-h-sm);font-size:var(--fs-xs);padding:0 9px}
+
+.feed.dm{max-width:1400px}
+@media(max-width:700px){.role{display:none}.sync{display:none}.dm-bar{gap:8px}.dm-bar .search{max-width:none}.review-strip .stat.pkg{grid-column:span 1}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ================= Sidebar (mirrors platform.html rail; Document Manager replaces TRL Accelerator) ================= -->
+  <nav class="sidebar" aria-label="Workspace">
+    <div class="ws">
+      <button class="btn side-collapse" id="sideCollapse" aria-label="Collapse sidebar" title="Collapse sidebar">«</button>
+      <img src="../platform/Logo_Hyperspace_White_Beta.png" alt="PLANA Hyperspace">
+      <div class="ws-sub">Intelligence Operating System</div>
+    </div>
+    <div class="side-scroll">
+      <div class="side-label">Dashboard views</div>
+      <a class="side-item" href="../platform/platform.html"><span class="ico">⚡</span>Me</a>
+      <a class="side-item" href="../platform/platform.html"><span class="ico">⇄</span>Work Package<span class="caret push">▾</span></a>
+      <button class="side-item disabled" disabled><span class="ico">▣</span>The Business<span class="push" style="font-size:11px">🔒</span></button>
+
+      <div class="side-label">Launchpad</div>
+      <a class="side-item ext" href="https://plana.atlassian.net" target="_blank" rel="noopener"><span class="ico">◳</span>Jira<span class="ext-mark">↗</span></a>
+      <a class="side-item ext" href="https://app.smartsheet.com" target="_blank" rel="noopener"><span class="ico">▦</span>Smartsheet<span class="ext-mark">↗</span></a>
+      <a class="side-item ext" href="https://mail.google.com" target="_blank" rel="noopener"><span class="ico">✉</span>Gmail<span class="ext-mark">↗</span></a>
+      <a class="side-item ext" href="https://drive.google.com" target="_blank" rel="noopener"><span class="ico">⛁</span>Google Drive<span class="ext-mark">↗</span></a>
+      <button class="side-item sub"><span class="ico">＋</span><span style="color:var(--faint)">Add folder</span></button>
+
+      <div class="side-label">Discovery</div>
+      <a class="side-item" href="../due-diligence/dd-admin.html"><span class="ico">⌕</span>Due Diligence</a>
+      <a class="side-item" href="#" aria-current="page"><span class="ico">▤</span>Document Manager<span class="cnt" id="sideReviewCnt" title="Waiting on Braden">0</span></a>
+      <button class="side-item disabled" disabled title="Coming soon"><span class="ico">✈</span>FAA Doc Sync<span class="push" style="font-size:9.5px;letter-spacing:.06em;color:var(--faint)">SOON</span></button>
+      <a class="side-item" href="../platform/tutorial.html"><span class="ico">◫</span>Tutorial</a>
+    </div>
+    <div class="side-foot">
+      <button class="btn" style="width:100%;justify-content:center">⇌ Integrations</button>
+      <button class="user"><div class="avatar">SU</div><div><b>Scout Underwood</b><span>scout.underwood@plana…</span></div></button>
+    </div>
+  </nav>
+
+  <!-- ================= Main ================= -->
+  <main class="main">
+    <header class="topbar">
+      <button class="btn side-expand" id="sideExpand" aria-label="Open menu">☰</button>
+      <div class="crumbs">Discovery <span>›</span> <b>Document Manager</b></div>
+      <div class="role push" title="Demo control: switch who you're acting as">
+        Acting as
+        <div class="seg" id="roleSeg" role="group" aria-label="Acting as">
+          <button aria-pressed="true" data-role="scout">Scout</button>
+          <button aria-pressed="false" data-role="braden">Braden</button>
+          <button aria-pressed="false" data-role="mitch">Mitch</button>
+        </div>
+      </div>
+      <div class="sync" role="status"><span class="dot" aria-hidden="true"></span> Synced Nov 3, 9:19 AM <button class="btn" type="button">Sync now</button></div>
+    </header>
+
+    <div class="dm-bar">
+      <div class="seg" role="group" aria-label="View">
+        <button aria-pressed="true" data-view="board">Board</button>
+        <button aria-pressed="false" data-view="table">Table</button>
+      </div>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input class="input" id="q" type="search" placeholder="Search title, ID, filename…" aria-label="Search documents">
+      </div>
+      <div class="dm-filters">
+        <span class="qf"><select class="quiet" id="fWp" aria-label="Work package"><option value="">All work packages</option></select></span>
+        <span class="qsep">·</span>
+        <span class="qf"><select class="quiet" id="fWho" aria-label="Contributor"><option value="">Everyone</option></select></span>
+        <span class="qsep">·</span>
+        <span class="qf"><select class="quiet" id="fLvl" aria-label="Hierarchy level"><option value="">Any level</option><option value="aircraft">L1 · Aircraft</option><option value="system">L2 · System</option><option value="subsystem">L3 · Subsystem</option><option value="component">L4 · Component</option></select></span>
+        <span class="qsep">·</span>
+        <span class="qf"><select class="quiet" id="fType" aria-label="File type"><option value="">Any type</option><option value="pdf">PDF</option><option value="gdoc">Google Doc</option><option value="gsheet">Google Sheet</option><option value="cad">3D / CAD</option></select></span>
+        <span class="qsep">·</span>
+        <label class="check" style="min-height:30px;font-size:var(--fs-sm);color:var(--muted)"><input type="checkbox" id="fMine"> Mine</label>
+      </div>
+      <button class="review-toggle push" id="reviewToggle" aria-pressed="false" title="Highlight what changed since the last bi-weekly review">
+        <span class="status-dot" style="width:7px;height:7px"></span> Since last review
+        <span class="qf" onclick="event.stopPropagation()"><select class="quiet" id="reviewDays" aria-label="Review window">
+          <option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option></select></span>
+      </button>
+      <button class="btn btn-primary" id="uploadBtn">⇪ Upload</button>
+    </div>
+
+    <section class="feed dm">
+      <div class="feed-head">
+        <h2 id="feedTitle">Engineering deliverables</h2>
+        <span class="counts" id="counts"></span>
+        <span class="push counts" id="hint" style="font-style:italic;color:var(--faint)">Drag cards between columns to change status · click a card for versions &amp; assembly</span>
+      </div>
+
+      <!-- review summary strip (only in "since last review" mode) -->
+      <div class="review-strip mt-2" id="reviewStrip" hidden></div>
+
+      <!-- Kanban -->
+      <div class="board mt-2" id="board">
+        <div class="col-kb" data-col="wip"><div class="col-head"><h3>Work in progress</h3><span class="count" data-cnt></span></div><div class="col-body"></div></div>
+        <div class="col-kb" data-col="review"><div class="col-head"><h3>Braden to review</h3><span class="count hot" data-cnt></span><span class="gloss">release gate</span></div><div class="col-body"></div></div>
+        <div class="col-kb" data-col="released"><div class="col-head"><h3>Released</h3><span class="count" data-cnt></span></div><div class="col-body"></div></div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap mt-2" id="tableWrap" hidden>
+        <table class="table" id="table">
+          <thead><tr>
+            <th class="sortable" data-k="id">ID</th><th class="sortable" data-k="title">Document</th><th class="sortable" data-k="wp">WP</th>
+            <th class="sortable" data-k="level">Level</th><th class="sortable" data-k="status">Status</th><th>Assembly</th><th class="sortable" data-k="ver">Ver</th>
+            <th class="sortable" data-k="by">Contributor</th><th class="sortable" data-k="updated">Updated</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= Detail drawer ================= -->
+<div class="scrim" id="drawerScrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="ovl-head">
+    <div class="ftype" id="dType">PDF</div>
+    <div class="grow"><h5 id="dTitle">—</h5><span class="serial" id="dId">DOC-0000</span></div>
+    <button class="ovl-close" id="drawerClose" aria-label="Close">✕</button>
+  </div>
+  <div class="ovl-body" id="dBody"></div>
+  <div class="ovl-foot">
+    <button class="btn btn-ghost btn-sm archive-btn" id="dArchive" title="Remove from the board — kept in the record, restorable">⌫ Archive</button>
+    <span class="who" id="dFootNote">Status moves are logged with your name and timestamp.</span>
+    <button class="btn" id="dOpenDrive">Open in Drive ↗</button>
+    <button class="btn btn-brand" id="dNewVersion">⇪ New version</button>
+  </div>
+</aside>
+
+<!-- ================= Upload modal ================= -->
+<div class="scrim" id="upScrim"></div>
+<div class="ovl" id="upOvl" role="dialog" aria-modal="true" aria-labelledby="upTitle">
+  <div class="ovl-head"><h5 id="upTitle">Upload to Hyperspace</h5><button class="ovl-close" id="upClose" aria-label="Close">✕</button></div>
+  <div class="ovl-body" id="upBody">
+    <div class="field mode-switch">
+      <label>What is this?</label>
+      <div class="seg" id="upMode" role="group">
+        <button aria-pressed="true" data-mode="new">New document</button>
+        <button aria-pressed="false" data-mode="version">New version of an existing document</button>
+      </div>
+    </div>
+    <div class="field" id="upExistingWrap" hidden>
+      <label>Existing document <span class="req">*</span></label>
+      <div class="pick-wrap">
+        <input class="input" id="upExisting" placeholder="Search by title or ID…" autocomplete="off">
+        <div class="pick-list" id="upExistingList"></div>
+      </div>
+      <div class="hint" id="upExistingHint">The filename can change — the Hyperspace ID is the anchor.</div>
+    </div>
+    <div class="field">
+      <label>File <span class="req">*</span></label>
+      <div class="drop" id="drop" tabindex="0" role="button">
+        <b>Drop a file here or click to browse</b>
+        PDF, Google Doc / Sheet link, STEP, SLDPRT, CATPart, or anything else engineering produces
+        <div id="dropFile"></div>
+      </div>
+    </div>
+    <div class="field" id="upTitleWrap">
+      <label>Title <span class="req">*</span></label>
+      <input class="input" id="upTitleIn" placeholder="e.g. Level 1 sizing — KVP requirements">
+    </div>
+    <div class="field">
+      <label>Description &amp; scope</label>
+      <textarea id="upDesc" style="min-height:72px" placeholder="What this document covers, what it deliberately leaves out, and what depends on it. Shown in the drawer and read by the knowledge base."></textarea>
+    </div>
+    <div class="row gap-lg" style="align-items:flex-start">
+      <div class="field grow"><label>Work package <span class="req">*</span></label><select id="upWp"></select></div>
+      <div class="field grow"><label>Hierarchy level <span class="req">*</span></label><select id="upLvl"><option value="">Choose…</option><option value="aircraft">L1 · Aircraft</option><option value="system">L2 · System</option><option value="subsystem">L3 · Subsystem</option><option value="component">L4 · Component</option></select><div class="hint" id="upLvlHint" hidden></div></div>
+      <div class="field grow"><label>File type</label><select id="upType"><option value="pdf">PDF</option><option value="gdoc">Google Doc</option><option value="gsheet">Google Sheet</option><option value="cad">3D / CAD</option></select></div>
+    </div>
+    <div class="field">
+      <label>Part of (assembly / system)</label>
+      <div class="tagf" id="upParents"><input class="tag-in" id="upParentIn" placeholder="Type to add a parent document…" autocomplete="off"></div>
+      <div class="pick-wrap"><div class="pick-list" id="upParentList"></div></div>
+      <div class="hint">A document can belong to more than one assembly. Parents aren't complete until every child is released.</div>
+    </div>
+    <div class="field">
+      <label>Change summary <span class="req" id="upNoteReq" hidden>*</span></label>
+      <textarea id="upNote" placeholder="What changed and why — this is what Braden and the knowledge base will read."></textarea>
+    </div>
+    <div class="field">
+      <label>Appended automatically</label>
+      <div class="auto-meta">
+        <div><span class="l">Contributor</span><b id="amWho">Scout Underwood</b></div>
+        <div><span class="l">Date / time</span><b id="amWhen">—</b></div>
+        <div><span class="l">Hyperspace ID</span><b id="amId">DOC-0000</b></div>
+        <div><span class="l">Version</span><b id="amVer">v1</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="ovl-foot" id="upFoot">
+    <span class="who">Pushed to Drive, the Hyperspace database, the knowledge base, Google Sheet and Smartsheet in one step.</span>
+    <button class="btn" id="upCancel">Cancel</button>
+    <button class="btn btn-brand" id="upSubmit">Upload to Hyperspace</button>
+  </div>
+</div>
+
+<div id="toastHost"></div>
+
+<script>
+/* =====================================================================
+   Sample data — Hyperspace document records.
+   id is the anchor; versions carry filenames; parents = assemblies this
+   document belongs to (multi-parent allowed). Dates relative to "today".
+   ===================================================================== */
+const TODAY = new Date('2026-11-03T09:30:00-08:00');
+const d = (daysAgo, h=10) => { const t = new Date(TODAY); t.setDate(t.getDate()-daysAgo); t.setHours(h, (daysAgo*17)%60, 0, 0); return t; };
+const PEOPLE = {
+  scout:{name:'Scout Underwood',ini:'SU'}, braden:{name:'Braden Kim',ini:'BK'}, mitch:{name:'Mitch Amos',ini:'MA'},
+  jeremy:{name:'Jeremy Thomas',ini:'JT'}, duc:{name:'Duc Huy Tran',ini:'DT'}, priya:{name:'Priya Natarajan',ini:'PN'}, leo:{name:'Leo Marsh',ini:'LM'}
+};
+const WPS = ['WP-01','WP-04','WP-08','WP-11','WP-13'];
+const STATUS = {wip:'Work in progress', review:'Braden to review', released:'Released'};
+/* aerospace hierarchy level — the fourth axis next to status, work package and assembly */
+const LEVELS = {aircraft:{n:1,l:'Aircraft'}, system:{n:2,l:'System'}, subsystem:{n:3,l:'Subsystem'}, component:{n:4,l:'Component'}};
+/* who tagged the level, and when: the last "Level …" history entry, else the original upload */
+const lvlCaption=x=>{ const h=[...x.history].reverse().find(e=>e.what.startsWith('Level')); if(!h&&!x.level)return '';
+  const by=h?h.by:x.by, at=h?h.at:x.history[0].at, verb=h?(h.what==='Level cleared'?'Cleared':'Changed'):'Tagged at upload';
+  return `<span class="lvl-cap"><span class="avatar sm" style="width:16px;height:16px;font-size:7px">${PEOPLE[by].ini}</span>${verb} by <b>${PEOPLE[by].name}</b> · ${fmtDT(at)}</span>`; };
+/* RACI ownership — mirrors the company-brain RACI tracker. Unset = AI-suggested default until a human edits it. */
+const RACI_ROWS=[['R','Responsible','r'],['A','Accountable','a'],['C','Consulted','c'],['I','Informed','i']];
+const raciOf=x=>x.raci||{r:[x.by],a:['braden'],c:[...new Set(x.parents.map(byId).filter(Boolean).map(p=>p.by).filter(b=>b!==x.by))],i:['mitch']};
+const raciProv=x=>x.raciBy?`<span class="chip prov-ico has-tip" data-tip="Human verified — ${PEOPLE[x.raciBy].name} · ${fmtDT(x.raciAt)}" aria-label="Verified by ${PEOPLE[x.raciBy].name}"><svg width="13" height="13" viewBox="0 0 24 24" fill="#3fb950" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z"/></svg></span>`
+  :`<span class="chip prov-ico has-tip" data-tip="AI suggested from contributor, reviewer and parent assemblies — not yet verified" aria-label="AI suggested">✨</span>`;
+const lvlChip=(k,extra='')=>k&&LEVELS[k]?`<span class="chip lvl lvl-${k} ${extra}" title="Level ${LEVELS[k].n} — ${LEVELS[k].l} level"><i>L${LEVELS[k].n}</i>${LEVELS[k].l}</span>`:'';
+let DOCS = [
+  {id:'DOC-0131',desc:'Index for the Level 1 sizing deliverable set. Scope: the aircraft-level sizing baseline (range, payload, MTOW) that every WP-01 subsystem budget inherits from. Out of scope: detailed subsystem design.',level:'aircraft',title:'Level 1 sizing package',type:'gdoc',wp:'WP-01',status:'wip',by:'jeremy',parents:[],
+   versions:[{v:1,file:'L1_Sizing_Package_Index.gdoc',by:'jeremy',at:d(41),note:'Index document for the Level 1 sizing deliverable set.'}],
+   history:[{what:'Created',by:'jeremy',at:d(41)}]},
+  {id:'DOC-0132',raci:{r:['jeremy'],a:['braden'],c:['duc','priya'],i:['mitch','scout']},raciBy:'duc',raciAt:d(20,11),desc:'Key value parameters the Level 1 sizing must satisfy, with the compliance table used at sign-off. Scope: aircraft-level requirements only; subsystem allocations live in the mass budget.',level:'aircraft',title:'Level 1 sizing — KVP requirements',type:'pdf',wp:'WP-01',status:'review',by:'jeremy',parents:['DOC-0131'],
+   versions:[{v:1,file:'KVP_Requirements_draft.pdf',by:'jeremy',at:d(38),note:'First cut of key value parameters.'},
+             {v:2,file:'KVP_Requirements_rev2.pdf',by:'jeremy',at:d(20),note:'Added range and payload KVPs after sizing review.'},
+             {v:3,file:'L1_KVP_Requirements_signoff.pdf',by:'jeremy',at:d(3,14),note:'Sign-off copy. Closes action 45033 — updated, archived prior revs, compliance table added.'}],
+   history:[{what:'Created',by:'jeremy',at:d(38)},{what:'Moved to Braden to review',by:'jeremy',at:d(3,14)}]},
+  {id:'DOC-0133',desc:'Subsystem-by-subsystem mass allocation against the Level 1 MTOW target. Scope: structure, powertrain, battery, landing gear, systems. Source of truth for mass; other documents reference it rather than restate it.',level:'aircraft',title:'Mass budget — Level 1',type:'gsheet',wp:'WP-01',status:'released',by:'priya',parents:['DOC-0131'],
+   versions:[{v:1,file:'Mass_Budget_L1.gsheet',by:'priya',at:d(35),note:'Initial mass budget by subsystem.'},
+             {v:2,file:'Mass_Budget_L1.gsheet',by:'priya',at:d(16),note:'Rolled in turbo generator mass from Honeywell data.'}],
+   history:[{what:'Created',by:'priya',at:d(35)},{what:'Moved to Braden to review',by:'priya',at:d(16)},{what:'Released',by:'braden',at:d(9)}]},
+  {id:'DOC-0134',desc:'Wing loading / disk loading trade and the resulting planform. Scope: aero sizing inputs to Level 1 only.',level:'aircraft',title:'Aero sizing memo',type:'pdf',wp:'WP-01',status:'released',by:'leo',parents:['DOC-0131'],
+   versions:[{v:1,file:'Aero_Sizing_Memo.pdf',by:'leo',at:d(30),note:'Wing loading and disk loading trade.'}],
+   history:[{what:'Created',by:'leo',at:d(30)},{what:'Moved to Braden to review',by:'leo',at:d(28)},{what:'Released',by:'braden',at:d(24)}]},
+  {id:'DOC-0140',desc:'System-level definition of the hybrid powertrain: architecture, interfaces, and power split. Scope: everything between fuel in and shaft power out; subsystems are documented under this.',level:'system',title:'Hybrid powertrain system',type:'gdoc',wp:'WP-04',status:'released',by:'duc',parents:[],
+   versions:[{v:1,file:'Powertrain_System_Definition.gdoc',by:'duc',at:d(50),note:'System-level definition and interface list.'},
+             {v:2,file:'Powertrain_System_Definition.gdoc',by:'duc',at:d(12),note:'Interface table updated for turbo generator option B.'}],
+   history:[{what:'Created',by:'duc',at:d(50)},{what:'Released',by:'braden',at:d(45)}]},
+  {id:'DOC-0141',raci:{r:['duc'],a:['braden'],c:['jeremy','leo'],i:['mitch']},raciBy:'duc',raciAt:d(6,16),desc:'Specification for the turbo generator, including Honeywell option B parameters. Scope: performance envelope, mass, interfaces, environmental limits.',level:'subsystem',title:'Turbo generator specification',type:'pdf',wp:'WP-04',status:'review',by:'duc',parents:['DOC-0140'],
+   versions:[{v:1,file:'TurboGen_Spec_v0.pdf',by:'duc',at:d(22),note:'Draft spec from Honeywell correspondence.'},
+             {v:2,file:'TurboGen_Spec_optionB.pdf',by:'duc',at:d(6,16),note:'Option B parameters from the Honeywell development manager email (action 45034).'}],
+   history:[{what:'Created',by:'duc',at:d(22)},{what:'Moved to Braden to review',by:'duc',at:d(6,16)}]},
+  {id:'DOC-0142',raci:{r:['jeremy'],a:['braden'],c:['priya','leo'],i:['mitch','duc']},raciBy:'scout',raciAt:d(1,9),desc:'Battery pack layout and structural interfaces (STEP model). Scope: 14-module pack, cold plate, mounting brackets. Cell chemistry and BMS are out of scope here.',level:'subsystem',title:'Battery pack design',type:'cad',wp:'WP-04',status:'wip',by:'jeremy',parents:['DOC-0140'],
+   versions:[{v:1,file:'BatteryPack_A1.STEP',by:'jeremy',at:d(18),note:'Module layout, 14 modules, cold plate below.'},
+             {v:2,file:'BatteryPack_A2.STEP',by:'jeremy',at:d(1,8),note:'Moved cold plate inboard; bracket interfaces per fastener spec rev B.'}],
+   history:[{what:'Created',by:'jeremy',at:d(18)}]},
+  {id:'DOC-0143',desc:'Common fastener and bracket specification shared by the battery pack and landing gear. Scope: torque table, locking features, material callouts.',level:'component',title:'Fastener & bracket spec',type:'pdf',wp:'WP-04',status:'released',by:'leo',parents:['DOC-0142','DOC-0150'],
+   versions:[{v:1,file:'Fastener_Spec_A.pdf',by:'leo',at:d(27),note:'Common fastener spec for powertrain and landing gear.'},
+             {v:2,file:'Fastener_Spec_B.pdf',by:'leo',at:d(11),note:'Rev B: torque table and locking feature callouts.'}],
+   history:[{what:'Created',by:'leo',at:d(27)},{what:'Released',by:'braden',at:d(8,11)}]},
+  {id:'DOC-0144',desc:'Steady-state cooling calculation for the battery pack in the hover case. Scope: thermal only; feeds the pack design, does not change it.',level:'subsystem',title:'Thermal analysis — pack cooling',type:'gsheet',wp:'WP-04',status:'wip',by:'priya',parents:['DOC-0142'],
+   versions:[{v:1,file:'Pack_Thermal_Calc.gsheet',by:'priya',at:d(5),note:'Steady-state cooling calc, hover case.'}],
+   history:[{what:'Created',by:'priya',at:d(5)}]},
+  {id:'DOC-0150',desc:'Landing gear concept assembly (SolidWorks). Scope: skid geometry and attach points. Energy absorption analysis to follow as a child document.',level:'system',title:'Landing gear assembly',type:'cad',wp:'WP-08',status:'wip',by:'leo',parents:[],
+   versions:[{v:1,file:'LG_Assy_concept.SLDASM',by:'leo',at:d(14),note:'Concept skid geometry.'}],
+   history:[{what:'Created',by:'leo',at:d(14)}]},
+  {id:'DOC-0151',desc:'Battery and turbo generator supplier contacts gathered at NBAA. Scope: leads only; no pricing or quotes.',level:'subsystem',title:'Supplier lead sheet — NBAA',type:'gsheet',wp:'WP-11',status:'released',by:'mitch',parents:[],
+   versions:[{v:1,file:'NBAA_Supplier_Leads.gsheet',by:'mitch',at:d(10),note:'Battery and turbo generator supplier contacts from NBAA (action 45035).'}],
+   history:[{what:'Created',by:'mitch',at:d(10)},{what:'Released',by:'braden',at:d(2,9)}]},
+  {id:'DOC-0152',desc:'Process automation deck and walkthrough video, including the Document Manager before/after flows. Scope: internal process proposal.',level:'',title:'Process automation walkthrough',type:'pdf',wp:'WP-13',status:'review',by:'scout',parents:[],
+   versions:[{v:1,file:'Process_Automation_Deck.pdf',by:'scout',at:d(13),note:'Slide deck + walkthrough video link (Oct 21 email).'},
+             {v:2,file:'Process_Automation_Deck_v2.pdf',by:'scout',at:d(4,15),note:'Added Document Manager before/after flows.'}],
+   history:[{what:'Created',by:'scout',at:d(13)},{what:'Moved to Braden to review',by:'scout',at:d(4,15)}]},
+  {id:'DOC-0153',desc:'Ground test sequence outline for the propulsion system. Scope: test order, instrumentation, pass/fail criteria to be added.',level:'system',title:'Propulsion test plan',type:'gdoc',wp:'WP-04',status:'wip',by:'duc',parents:['DOC-0140'],
+   versions:[{v:1,file:'Propulsion_Test_Plan.gdoc',by:'duc',at:d(33),note:'Ground test sequence outline.'}],
+   history:[{what:'Created',by:'duc',at:d(33)}]},
+  {id:'DOC-0154',desc:'Initial discussion of certification basis and applicable rules. Scope: aircraft level, regulatory framing only.',level:'aircraft',title:'Certification basis memo',type:'pdf',wp:'WP-13',status:'released',by:'scout',parents:[],
+   versions:[{v:1,file:'Cert_Basis_Memo.pdf',by:'scout',at:d(48),note:'Initial certification basis discussion.'}],
+   history:[{what:'Created',by:'scout',at:d(48)},{what:'Released',by:'braden',at:d(40)}]},
+];
+
+/* ===== state ===== */
+let dOpen={desc:false,own:false,versions:false,tree:false,history:false}, dLinking=false, dEditing=false, dRaciEdit=false;
+let showArchived=false;
+let role='scout', view='board', reviewing=false, reviewDays=14, sortK='updated', sortDir=-1, openId=null;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const byId=id=>DOCS.find(x=>x.id===id);
+const cur=doc=>doc.versions[doc.versions.length-1];
+const updatedAt=doc=>new Date(Math.max(...doc.versions.map(v=>+v.at),...doc.history.map(h=>+h.at)));
+const children=id=>DOCS.filter(x=>x.parents.includes(id));
+const TYPE_LBL={pdf:'PDF',gdoc:'GDOC',gsheet:'SHEET',cad:'CAD'};
+const fmtD=t=>t.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const fmtDT=t=>t.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+const ago=t=>{const h=(TODAY-t)/36e5; if(h<1)return 'just now'; if(h<24)return Math.round(h)+'h ago'; const dd=Math.round(h/24); return dd===1?'yesterday':dd+'d ago'};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const since=()=>{const t=new Date(TODAY); t.setDate(t.getDate()-reviewDays); return t};
+const changedSince=doc=>{const s=since(); return doc.versions.some(v=>v.at>=s&&v.v>1)||doc.history.some(h=>h.at>=s&&h.what!=='Created')||doc.history.some(h=>h.at>=s&&h.what==='Created')};
+const deltaLabel=doc=>{const s=since(); const out=[]; if(doc.history.some(h=>h.at>=s&&h.what==='Created'))out.push('new');
+  const nv=doc.versions.filter(v=>v.at>=s&&v.v>1).length; if(nv)out.push(nv>1?nv+' new versions':'new version');
+  const mv=doc.history.filter(h=>h.at>=s&&h.what!=='Created').pop(); if(mv)out.push(mv.what==='Released'?'released':mv.what.replace('Moved to ','→ '));
+  return out.join(' · ')};
+
+/* roll-up: a document is complete when it is released AND every child is complete (recursive, multi-parent safe) */
+function rollup(id,seen=new Set()){ if(seen.has(id))return {done:0,total:0,complete:true}; seen.add(id);
+  const kids=children(id); let done=0, allComplete=true;
+  kids.forEach(k=>{const r=rollup(k.id,seen); const c=k.status==='released'&&r.complete; if(c)done++; else allComplete=false;});
+  return {done,total:kids.length,complete:allComplete}; }
+const isComplete=doc=>doc.status==='released'&&rollup(doc.id).complete;
+
+/* ===== filters ===== */
+function filtered(){ const q=$('#q').value.trim().toLowerCase(), wp=$('#fWp').value, who=$('#fWho').value, ty=$('#fType').value, lv=$('#fLvl').value, mine=$('#fMine').checked;
+  return DOCS.filter(x=>(showArchived?!!x.archived:!x.archived)&&(!wp||x.wp===wp)&&(!who||x.by===who)&&(!ty||x.type===ty)&&(!lv||x.level===lv)&&(!mine||x.by===role)&&
+    (!q||x.title.toLowerCase().includes(q)||x.id.toLowerCase().includes(q)||x.versions.some(v=>v.file.toLowerCase().includes(q)))); }
+
+/* ===== render ===== */
+function render(){ const list=filtered();
+  const nArch=DOCS.filter(x=>x.archived).length, live=DOCS.filter(x=>!x.archived).length;
+  $('#counts').innerHTML=showArchived?`<b>${list.length}</b> archived · <button class="btn-link" id="archBack" style="font-size:12.5px">← back to board</button>`
+    :`<b>${list.length}</b> of ${live} documents · <b>${DOCS.filter(x=>x.status==='review'&&!x.archived).length}</b> waiting on Braden${nArch?` · <button class="btn-link" id="archShow" style="font-size:12.5px;color:var(--faint)">${nArch} archived</button>`:''}`;
+  const ab=$('#archBack'), as=$('#archShow'); if(ab)ab.onclick=()=>{showArchived=false;render()}; if(as)as.onclick=()=>{showArchived=true;render()};
+  $('#feedTitle').textContent=showArchived?'Archived documents':(reviewing?'Bi-weekly review':'Engineering deliverables');
+  $('#sideReviewCnt').textContent=DOCS.filter(x=>x.status==='review').length;
+  $('#board').hidden=view!=='board'; $('#tableWrap').hidden=view!=='table';
+  $('#board').classList.toggle('reviewing',reviewing); $('#table').classList.toggle('reviewing',reviewing);
+  $('#hint').textContent=reviewing?`Highlighted: changed since ${fmtD(since())} · dimmed: unchanged`:view==='board'?'Drag cards between columns to change status · click a card for versions & assembly':'Click a column header to sort · click a row for versions & assembly';
+  view==='board'?renderBoard(list):renderTable(list); renderStrip(list); }
+
+function cardHTML(x){ const v=cur(x), r=rollup(x.id), parent=x.parents.map(p=>byId(p)).filter(Boolean);
+  const flagged=x.status==='released'&&r.total&&!r.complete; const ch=reviewing&&changedSince(x);
+  let roll=''; if(r.total){ roll=`<div class="rollup ${r.complete?'done':''}" title="${r.done} of ${r.total} subassemblies released">
+      <span>⌬ ${r.done}/${r.total} ${r.total===1?'subassembly':'subassemblies'} released</span><span class="bar"><i style="width:${r.total?100*r.done/r.total:0}%"></i></span></div>`; }
+  const flag=flagged?`<div class="flag mt-1">⚠ Released but ${r.total-r.done} ${r.total-r.done===1?'subassembly is':'subassemblies are'} still open</div>`:'';
+  return `<article class="doc ${flagged?'flagged':''} ${ch?'changed':''} ${x.archived?'archived':''}" draggable="${canDrag(x)}" tabindex="0" data-id="${x.id}" role="button" aria-label="${esc(x.title)}">
+    <div class="d-top"><span class="ftype ${x.type}">${TYPE_LBL[x.type]}</span><h4>${esc(x.title)}</h4><span class="ver">v${v.v}</span></div>
+    <div class="d-meta">${x.archived?'<span class="chip dashed">archived</span>':''}<span class="chip outline">${x.wp}</span>${lvlChip(x.level)}${parent.map(p=>`<span class="chip dashed has-tip" data-tip="Part of ${esc(p.title)}">⌬ ${p.id}</span>`).join('')}
+      ${ch?`<span class="delta">● ${deltaLabel(x)}</span>`:''}</div>
+    ${roll}${flag}
+    ${role==='braden'&&x.status==='review'?`<div class="approve-row"><button class="btn btn-approve" data-approve="${x.id}">✓ Approve &amp; release</button><button class="btn btn-sm btn-ghost" data-sendback="${x.id}" title="Send back to Work in progress">↩ Send back</button></div>`:''}
+    <div class="d-foot"><span class="avatar sm" title="${PEOPLE[x.by].name}">${PEOPLE[x.by].ini}</span><span class="when">${ago(updatedAt(x))}</span><span class="serial">${x.id}</span></div>
+  </article>`; }
+
+function renderBoard(list){ $$('.col-kb').forEach(col=>{ const k=col.dataset.col, items=list.filter(x=>x.status===k).sort((a,b)=>updatedAt(b)-updatedAt(a));
+    col.querySelector('[data-cnt]').textContent=items.length;
+    col.querySelector('.col-body').innerHTML=items.length?items.map(cardHTML).join(''):`<div class="empty">Nothing here${k==='review'?' — Braden\'s queue is clear':''}.</div>`; });
+  $$('[data-approve]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();moveDoc(b.dataset.approve,'released')}));
+  $$('[data-sendback]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();moveDoc(b.dataset.sendback,'wip')}));
+  $$('.doc').forEach(el=>{ el.addEventListener('click',e=>{if(e.target.closest('button'))return;openDoc(el.dataset.id)}); el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDoc(el.dataset.id)}});
+    el.addEventListener('dragstart',e=>{ if(el.getAttribute('draggable')!=='true'){e.preventDefault();return} e.dataTransfer.setData('text/plain',el.dataset.id); el.classList.add('dragging'); });
+    el.addEventListener('dragend',()=>el.classList.remove('dragging')); }); }
+
+function renderTable(list){ const dir=sortDir, k=sortK;
+  const val=x=>({id:x.id,title:x.title,wp:x.wp,level:x.level&&LEVELS[x.level]?LEVELS[x.level].n:9,status:['wip','review','released'].indexOf(x.status),ver:cur(x).v,by:PEOPLE[x.by].name,updated:+updatedAt(x)}[k]);
+  list=[...list].sort((a,b)=>{const A=val(a),B=val(b); return (A>B?1:A<B?-1:0)*dir});
+  $$('#table th').forEach(th=>th.removeAttribute('aria-sort')); const th=$(`#table th[data-k="${k}"]`); if(th)th.setAttribute('aria-sort',dir>0?'ascending':'descending');
+  $('#table tbody').innerHTML=list.map(x=>{const r=rollup(x.id),v=cur(x),ch=reviewing&&changedSince(x);
+    const asm=r.total?`<span class="${r.complete?'muted':''}">${r.done}/${r.total} released</span>`:(x.parents.length?`<span class="muted">part of ${x.parents.join(', ')}</span>`:'<span class="faint">—</span>');
+    return `<tr class="${ch?'changed':''}" data-id="${x.id}" tabindex="0"><td class="mono">${x.id}</td><td><span class="ftype">${TYPE_LBL[x.type]}</span><b>${esc(x.title)}</b>${ch?` <span class="delta">● ${deltaLabel(x)}</span>`:''}</td>
+      <td>${x.wp}</td><td>${lvlChip(x.level,'sm')||'<span class="faint">—</span>'}</td><td><span class="st"><span class="status-dot ${x.status}"></span>${STATUS[x.status]}</span></td><td>${asm}</td><td class="num">v${v.v}</td>
+      <td>${PEOPLE[x.by].name}</td><td>${fmtD(updatedAt(x))} <span class="faint">${ago(updatedAt(x))}</span></td></tr>`}).join('');
+  $$('#table tbody tr').forEach(tr=>{tr.style.cursor='pointer'; tr.addEventListener('click',()=>openDoc(tr.dataset.id)); tr.addEventListener('keydown',e=>{if(e.key==='Enter')openDoc(tr.dataset.id)})}); }
+
+function renderStrip(list){ const strip=$('#reviewStrip'); strip.hidden=!reviewing; if(!reviewing)return; const s=since();
+  const changed=list.filter(changedSince);
+  const released=list.filter(x=>x.history.some(h=>h.at>=s&&h.what==='Released')).length;
+  const nv=list.reduce((n,x)=>n+x.versions.filter(v=>v.at>=s&&v.v>1).length,0);
+  const toReview=list.filter(x=>x.status==='review').length;
+  const created=list.filter(x=>x.history.some(h=>h.at>=s&&h.what==='Created')).length;
+  const roots=list.filter(x=>!x.parents.length&&rollup(x.id).total);
+  strip.innerHTML=`<div class="stat"><div class="n">${changed.length}</div><div class="l">documents changed since ${fmtD(s)}</div></div>
+    <div class="stat"><div class="n" style="color:#7bd88f">${released}</div><div class="l">released</div></div>
+    <div class="stat"><div class="n">${nv}</div><div class="l">new versions uploaded</div></div>
+    <div class="stat"><div class="n" style="color:var(--brand-orange)">${toReview}</div><div class="l">in Braden's queue now</div></div>
+    <div class="stat"><div class="n">${created}</div><div class="l">new documents</div></div>
+    ${roots.map(rt=>{const r=rollup(rt.id); const q=children(rt.id).filter(k=>k.status==='review').length;
+      return `<div class="stat pkg"><div class="n">${esc(rt.title)} <span class="serial">${rt.id}</span></div>
+      <div class="l">${r.done} of ${r.total} released${q?` · ${q} in Braden's queue`:''}${rt.status!=='released'?' · parent not yet released':''}</div>
+      <div class="bar"><i style="width:${100*r.done/r.total}%"></i></div></div>`}).join('')}`; }
+
+/* ===== drag & drop status moves ===== */
+function canDrag(x){ return true; }
+function canMove(doc,to){ if(to==='released'&&role!=='braden')return {ok:false,msg:'Only Braden can release. Move it to "Braden to review" and he\'ll take it from there.'};
+  if(doc.status==='released'&&to!=='released'&&role!=='braden')return {ok:false,msg:'Released documents are locked. Upload a new version instead, or ask Braden to pull it back.'};
+  return {ok:true}; }
+function moveDoc(id,to){ const doc=byId(id); if(!doc||doc.status===to)return; const chk=canMove(doc,to); if(!chk.ok){toast(chk.msg,'danger');return}
+  doc.status=to; doc.history.push({what:to==='released'?'Released':'Moved to '+STATUS[to],by:role,at:new Date(TODAY)});
+  render(); if(openId===id)openDoc(id,true);
+  const r=rollup(id); const warn=to==='released'&&r.total&&!r.complete?` — note: ${r.total-r.done} subassemblies still open`:'';
+  toast(`${doc.id} → ${STATUS[to]}${warn}`,warn?'danger':'success'); }
+$$('.col-kb').forEach(col=>{ col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('over')}); col.addEventListener('dragleave',()=>col.classList.remove('over'));
+  col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('over');moveDoc(e.dataTransfer.getData('text/plain'),col.dataset.col)}); });
+
+/* ===== drawer ===== */
+function treeNode(x,depth=0,seen=new Set()){ const kids=children(x.id), r=rollup(x.id), open=depth<2, dup=seen.has(x.id); seen.add(x.id);
+  const st=x.status==='released'?(r.complete?'<span class="chip success">released</span>':'<span class="chip danger">released · children open</span>'):x.status==='review'?'<span class="chip sev-high">to review</span>':'<span class="chip outline">wip</span>';
+  return `<div class="tnode ${x.id===openId?'self':''}"><button class="tog ${kids.length?'':'leaf'}" aria-expanded="${open}" aria-label="Toggle children"><span class="caret">▾</span></button>
+      <span class="tname" data-go="${x.id}">${esc(x.title)}</span>${x.level?`<i class="lvl-dot" title="${LEVELS[x.level].l} level">L${LEVELS[x.level].n}</i>`:''}${r.total?`<span class="faint" style="font-size:10px">${r.done}/${r.total}</span>`:''}${st}<span class="serial">${x.id}</span></div>
+    ${kids.length&&!dup?`<div class="tkids" ${open?'':'hidden'}>${kids.map(k=>treeNode(k,depth+1,seen)).join('')}</div>`:''}`; }
+
+function openDoc(id,keep){ const x=byId(id); if(!x)return; if(!keep&&openId!==id){dOpen={desc:false,own:false,versions:false,tree:false,history:false};dLinking=false;dEditing=false;dRaciEdit=false} openId=id; const v=cur(x), r=rollup(id), parents=x.parents.map(byId).filter(Boolean);
+  $('#dType').textContent=TYPE_LBL[x.type]; $('#dType').className='ftype '+x.type; $('#dTitle').textContent=x.title; $('#dId').textContent=x.id;
+  const rollLine=!r.total?'':r.complete?(x.status==='released'?`<div class="rollup-line ok">✓ Complete — this document and all ${r.total} subassemblies are released.</div>`:`<div class="rollup-line">All ${r.total} subassemblies are released. <b>This document itself is still ${STATUS[x.status].toLowerCase()}.</b></div>`)
+    :x.status==='released'?`<div class="rollup-line flag">⚠ Released, but ${r.total-r.done} of ${r.total} subassemblies are still open — not usable as a complete package yet.</div>`
+    :`<div class="rollup-line"><b>${r.done} of ${r.total}</b> subassemblies released. This document isn't complete until every child below is.</div>`;
+  const parentsNote=parents.length?`<div class="rollup-line">${isComplete(x)?'✓ Done':'Still open'} from the parent's point of view — ${parents.map(p=>`<b>${esc(p.title)}</b>`).join(' and ')} ${parents.length>1?'count':'counts'} this document toward completion.</div>`:'';
+  $('#dBody').innerHTML=`
+    <div class="dsec"><div class="dx-h">Status</div>
+      <div class="steps" id="steps">${Object.entries(STATUS).map(([k,l])=>`<button data-col="${k}" aria-pressed="${x.status===k}" ${!canMove(x,k).ok&&x.status!==k?'disabled title="'+esc(canMove(x,k).msg)+'"':''}>${l}<small>${k==='released'?'Braden only':k==='review'?'release gate':'open'}</small></button>`).join('')}</div>
+      ${rollLine}${parentsNote}</div>
+    <div class="dsec"><div class="dx-h">Details</div>
+      <dl class="kv"><dt>Work package</dt><dd><span class="chip outline">${x.wp}</span></dd>
+        <dt>Hierarchy level</dt><dd><div class="more-wrap" style="display:inline-block">
+          <button class="lvl-pick" id="dSetLvl" aria-haspopup="menu" aria-expanded="false" title="Change hierarchy level">${lvlChip(x.level)||'<span class="chip dashed">Set level</span>'}<span class="caret">▾</span></button>
+          <div class="menu left" id="dLvlMenu" role="menu">${Object.entries(LEVELS).map(([k,v])=>`<button role="menuitemradio" aria-checked="${x.level===k}" data-lvl="${k}"><i class="lvl-dot">L${v.n}</i> ${v.l} level</button>`).join('')}
+            <div class="sep"></div><button data-lvl="" ${x.level?'':'aria-checked="true"'}>Not set</button></div></div>${lvlCaption(x)}</dd>
+        <dt>Contributor</dt><dd>${PEOPLE[x.by].name}</dd>
+        <dt>Current file</dt><dd class="mono" style="font-size:12px">${esc(v.file)} <span class="muted">v${v.v}</span></dd>
+        <dt>Created</dt><dd>${fmtDT(x.history[0].at)}</dd>
+        <dt>Last activity</dt><dd>${fmtDT(updatedAt(x))} <span class="muted">${ago(updatedAt(x))}</span></dd>
+        <dt>Synced to</dt><dd><div class="sync-row"><span class="chip outline">⛁ Drive</span><span class="chip outline">◈ Hyperspace DB</span><span class="chip outline">✦ Knowledge base</span><span class="chip outline">▦ Google Sheet</span><span class="chip outline">▦ Smartsheet</span></div></dd></dl></div>
+    <div class="dsec acc" data-acc="desc"><div class="dx-h"><button class="acc-tog" aria-expanded="${dOpen.desc}" aria-controls="acc-desc"><span class="caret">▾</span>Description &amp; scope${x.desc?'':' <span class="chip dashed" style="font-size:10px;min-height:18px;padding:1px 6px;text-transform:none;letter-spacing:0">empty</span>'}</button><button class="btn-link" id="dEditDesc">${x.desc?'Edit':'+ Add'}</button></div>
+      <div class="acc-body" id="acc-desc" ${dOpen.desc?"":"hidden"}>${dEditing?`<textarea class="input" id="dDescIn" style="min-height:110px;padding:10px 12px;line-height:1.6;resize:vertical">${esc(x.desc||'')}</textarea><div class="row mt-1" style="justify-content:flex-end"><button class="btn btn-sm" id="dDescCancel">Cancel</button><button class="btn btn-sm btn-primary" id="dDescSave">Save</button></div>`
+        :(x.desc?`<p class="desc-text">${esc(x.desc)}</p>`:`<div class="empty" style="padding:18px">No description yet — say what this document covers and what it leaves out.</div>`)}</div></div>
+    <div class="dsec acc" data-acc="own"><div class="dx-h"><button class="acc-tog" aria-expanded="${dOpen.own}" aria-controls="acc-own"><span class="caret">▾</span>Ownership ${raciProv(x)}</button><button class="btn-link" id="dEditRaci">${dRaciEdit?'':'Edit'}</button></div>
+      <div class="acc-body" id="acc-own" ${dOpen.own?"":"hidden"}>${dRaciEdit?`<div class="raci-edit">${RACI_ROWS.map(([l,role,k])=>`<div class="dx-row"><span class="dx-l">${l}</span><span class="dx-role">${role}</span>
+            <div class="tagf grow" data-k="${k}">${raciOf(x)[k].map(w=>`<span class="tag" data-w="${w}">${PEOPLE[w].name}<button class="tx" aria-label="Remove">✕</button></span>`).join('')}<input class="tag-in" placeholder="Add person…" autocomplete="off"><div class="pick-list"></div></div></div>`).join('')}
+          <div class="row mt-2" style="justify-content:flex-end"><span class="who faint" style="font-size:10.5px;flex:1;line-height:1.4">Saving marks this RACI as human-verified by ${PEOPLE[role].name}.</span><button class="btn btn-sm" id="dRaciCancel">Cancel</button><button class="btn btn-sm btn-primary" id="dRaciSave">Save</button></div></div>`
+        :`<div class="raci-view">${RACI_ROWS.map(([l,role,k])=>`<div class="dx-row"><span class="dx-l">${l}</span><span class="dx-role">${role}</span><span class="dx-who">${raciOf(x)[k].length?raciOf(x)[k].map(w=>`<span class="has-tip" data-tip="${PEOPLE[w].name}">${PEOPLE[w].name.split(' ')[0]}</span>`).join(' · '):'<span class="faint">—</span>'}</span></div>`).join('')}
+          <div class="dx-note">${x.raciBy?`Verified by ${PEOPLE[x.raciBy].name} · ${fmtDT(x.raciAt)}`:'Suggested from the contributor (R), the release gate (A), parent-assembly owners (C) and the program lead (I). Edit to confirm.'}</div></div>`}</div></div>
+    ${role==='braden'&&x.status==='review'?`<div class="dsec approve-row drawer-approve"><button class="btn btn-approve" data-approve="${x.id}">✓ Approve &amp; release</button><button class="btn btn-ghost" data-sendback="${x.id}" title="Send back to Work in progress">↩ Send back</button></div>`:''}
+    <div class="dsec acc" data-acc="versions"><div class="dx-h"><button class="acc-tog" aria-expanded="${dOpen.versions}" aria-controls="acc-versions"><span class="caret">▾</span>Versions <span class="count">${x.versions.length}</span></button><button class="btn-link" id="dAddVer">+ New version</button></div>
+      <div class="acc-body" id="acc-versions" ${dOpen.versions?"":"hidden"}><div class="vlist">${[...x.versions].reverse().map(ver=>`<div class="vitem ${ver.v===v.v?'current':''}"><div class="v-top"><span class="vn">v${ver.v}</span><span class="fname" title="${esc(ver.file)}">${esc(ver.file)}</span>${ver.v===v.v?'<span class="chip sev-high" style="font-size:10px;min-height:18px;padding:1px 6px">current</span>':''}<button class="btn btn-sm">⤓</button></div>
+        <div class="vnote">${esc(ver.note)}</div><div class="vby"><span class="avatar sm" style="width:18px;height:18px;font-size:8px">${PEOPLE[ver.by].ini}</span>${PEOPLE[ver.by].name} · ${fmtDT(ver.at)}</div></div>`).join('')}</div></div></div>
+    <div class="dsec acc" data-acc="tree"><div class="dx-h"><button class="acc-tog" aria-expanded="${dOpen.tree}" aria-controls="acc-tree"><span class="caret">▾</span>Assembly tree${x.parents.length||rollup(id).total?` <span class="count">${x.parents.length+rollup(id).total}</span>`:""}</button><button class="btn-link" id="dLink">+ Add parent</button></div>
+      <div class="acc-body" id="acc-tree" ${dOpen.tree?"":"hidden"}><div class="tree">
+        <div class="link-row" id="linkRow" ${dLinking?'':'hidden'}><div class="pick-wrap grow"><input class="input" id="linkIn" placeholder="Search the assembly or system this belongs to…" autocomplete="off"><div class="pick-list" id="linkList"></div></div><button class="btn btn-sm" id="linkCancel">Cancel</button><div class="hint err" id="linkHint" hidden></div></div>
+        ${parents.length?`<div class="parents"><div class="lbl">Part of</div>${parents.map(p=>`<div class="tnode"><button class="tog leaf"></button><span class="tname" data-go="${p.id}">↑ ${esc(p.title)}</span>${p.level?`<i class="lvl-dot">L${LEVELS[p.level].n}</i>`:''}<span class="faint" style="font-size:10px">${rollup(p.id).done}/${rollup(p.id).total}</span><span class="serial">${p.id}</span><button class="unlink has-tip" data-unlink="${p.id}" data-tip="Remove from ${esc(p.title)}" aria-label="Remove parent">✕</button></div>`).join('')}</div><div class="lbl">This document${r.total?' and its subassemblies':''}</div>`:`<div class="lbl">${r.total?'Top-level assembly':'Standalone document'}</div>`}
+        ${treeNode(x)}</div></div></div>
+    <div class="dsec acc" data-acc="history"><div class="dx-h"><button class="acc-tog" aria-expanded="${dOpen.history}" aria-controls="acc-history"><span class="caret">▾</span>History <span class="count">${x.history.length}</span></button></div><div class="acc-body" id="acc-history" ${dOpen.history?"":"hidden"}><div class="hist">${[...x.history].reverse().map(h=>`<div><b>${h.what}</b> · ${PEOPLE[h.by].name}<span class="when">${fmtDT(h.at)}</span></div>`).join('')}</div></div></div>`;
+  $$('#steps button').forEach(b=>b.addEventListener('click',()=>moveDoc(id,b.dataset.col)));
+  $$('#dBody [data-approve]').forEach(b=>b.addEventListener('click',()=>moveDoc(id,'released')));
+  $$('#dBody [data-sendback]').forEach(b=>b.addEventListener('click',()=>moveDoc(id,'wip')));
+  $('#dEditDesc').addEventListener('click',()=>{dOpen.desc=true;dEditing=true;openDoc(id,true);$('#dDescIn').focus()});
+  const dc=$('#dDescCancel'), ds=$('#dDescSave'); if(dc)dc.addEventListener('click',()=>{dEditing=false;openDoc(id,true)});
+  if(ds)ds.addEventListener('click',()=>{const nd=$('#dDescIn').value.trim(); if(nd!==(x.desc||'')){x.desc=nd;x.history.push({what:'Description updated',by:role,at:new Date(TODAY)})} dEditing=false;render();openDoc(id,true);toast(`${x.id} description saved`,'success')});
+  const di=$('#dDescIn'); if(di)di.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();dEditing=false;openDoc(id,true)}});
+  $('#dEditRaci').addEventListener('click',()=>{dOpen.own=true;dRaciEdit=true;openDoc(id,true)});
+  const rc=$('#dRaciCancel'); if(rc)rc.addEventListener('click',()=>{dRaciEdit=false;openDoc(id,true)});
+  const rs=$('#dRaciSave'); if(rs)rs.addEventListener('click',()=>{ const nr={}; $$('#dBody .raci-edit .tagf').forEach(f=>nr[f.dataset.k]=[...f.querySelectorAll('.tag')].map(t=>t.dataset.w));
+    x.raci=nr; x.raciBy=role; x.raciAt=new Date(TODAY); x.history.push({what:'Ownership (RACI) verified',by:role,at:new Date(TODAY)}); dRaciEdit=false; render(); openDoc(id,true); toast(`${x.id} ownership verified`,'success'); });
+  $$('#dBody .raci-edit .tagf').forEach(f=>{ const inp=f.querySelector('.tag-in'), list=f.querySelector('.pick-list');
+    f.addEventListener('click',()=>inp.focus());
+    f.querySelectorAll('.tag .tx').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();b.closest('.tag').remove()}));
+    const show=()=>{ const q=inp.value.toLowerCase(), have=[...f.querySelectorAll('.tag')].map(t=>t.dataset.w);
+      const items=Object.entries(PEOPLE).filter(([k,p])=>!have.includes(k)&&p.name.toLowerCase().includes(q));
+      list.innerHTML=items.map(([k,p])=>`<button type="button" data-w="${k}"><span class="avatar sm">${p.ini}</span>${p.name}</button>`).join('')||'<button type="button" disabled class="muted">No matches</button>';
+      list.classList.add('open'); list.querySelectorAll('button[data-w]').forEach(b=>b.onclick=e=>{e.stopPropagation(); const t=document.createElement('span'); t.className='tag'; t.dataset.w=b.dataset.w;
+        t.innerHTML=`${PEOPLE[b.dataset.w].name}<button class="tx" aria-label="Remove">✕</button>`; t.querySelector('.tx').onclick=ev=>{ev.stopPropagation();t.remove()}; f.insertBefore(t,inp); inp.value=''; list.classList.remove('open'); inp.focus(); }); };
+    inp.addEventListener('focus',show); inp.addEventListener('input',show);
+    inp.addEventListener('keydown',e=>{ if(e.key==='Escape'){e.stopPropagation();list.classList.remove('open')} if(e.key==='Backspace'&&!inp.value){const last=f.querySelector('.tag:last-of-type'); if(last)last.remove()} });
+    inp.addEventListener('blur',()=>setTimeout(()=>list.classList.remove('open'),150)); });
+  $$('#dBody .acc-tog').forEach(b=>b.addEventListener('click',()=>{const k=b.closest('.acc').dataset.acc; dOpen[k]=!dOpen[k]; b.setAttribute('aria-expanded',dOpen[k]); $('#acc-'+k).hidden=!dOpen[k];}));
+  $$('#dBody .tog:not(.leaf)').forEach(b=>b.addEventListener('click',()=>{const kids=b.closest('.tnode').nextElementSibling; const o=b.getAttribute('aria-expanded')==='true'; b.setAttribute('aria-expanded',!o); if(kids)kids.hidden=o;}));
+  $$('#dBody [data-go]').forEach(el=>el.addEventListener('click',()=>openDoc(el.dataset.go)));
+  $('#dSetLvl').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#dLvlMenu'), open=!m.classList.contains('open'); m.classList.toggle('open',open); $('#dSetLvl').setAttribute('aria-expanded',open); });
+  $$('#dLvlMenu button').forEach(b=>b.addEventListener('click',()=>{ const next=b.dataset.lvl; if(next===(x.level||''))return; x.level=next;
+    x.history.push({what:next?'Level set to '+LEVELS[next].l:'Level cleared',by:role,at:new Date(TODAY)}); render(); openDoc(id,true);
+    toast(next?`${x.id} tagged L${LEVELS[next].n} · ${LEVELS[next].l}`:`${x.id} level cleared`,'success'); }));
+  $('#dAddVer').addEventListener('click',()=>openUpload('version',id)); $('#dLink').addEventListener('click',()=>{ dOpen.tree=true; dLinking=true; openDoc(id,true); $('#linkIn').focus(); });
+  const linkIn=$('#linkIn'), linkList=$('#linkList');
+  const descendants=(did,acc=new Set())=>{children(did).forEach(k=>{if(!acc.has(k.id)){acc.add(k.id);descendants(k.id,acc)}});return acc};
+  const addParent=pid=>{ const p=byId(pid); x.parents.push(pid); x.history.push({what:'Linked under '+p.title+' ('+pid+')',by:role,at:new Date(TODAY)}); dLinking=false; render(); openDoc(id,true);
+    const warn=x.level&&p.level&&LEVELS[p.level].n>=LEVELS[x.level].n; toast(`${x.id} is now part of ${pid}${warn?' — note: parent is not above it in the hierarchy':''}`,warn?'danger':'success'); };
+  linkIn.oninput=()=>{ const excl=[id,...x.parents,...descendants(id)]; pickList(linkList,linkIn.value.toLowerCase(),excl,addParent);
+    const q=linkIn.value.toLowerCase(); const hint=$('#linkHint'); const self=DOCS.find(z=>z.id.toLowerCase()===q); hint.hidden=!(self&&excl.includes(self.id)); hint.textContent=self?`${self.id} can't be a parent — it is this document, already a parent, or one of its own subassemblies.`:''; };
+  linkIn.onfocus=()=>linkIn.oninput(); linkIn.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dLinking=false;openDoc(id,true)}};
+  $('#linkCancel').addEventListener('click',()=>{dLinking=false;openDoc(id,true)});
+  $$('#dBody [data-unlink]').forEach(b=>b.addEventListener('click',()=>{ const pid=b.dataset.unlink; x.parents=x.parents.filter(z=>z!==pid); x.history.push({what:'Unlinked from '+pid,by:role,at:new Date(TODAY)}); render(); openDoc(id,true); toast(`${x.id} removed from ${pid}`); }));
+  $('#dArchive').textContent=x.archived?'↩ Restore to board':'⌫ Archive'; $('#dArchive').title=x.archived?'Put this document back on the board':'Remove from the board — kept in the record, restorable';
+  $('#dFootNote').textContent=role==='braden'?'You can release from here. Moves are logged with your name and timestamp.':'Status moves are logged with your name and timestamp. Release is Braden\'s call.';
+  if(!keep){$('#drawer').classList.add('show');$('#drawerScrim').classList.add('show');$('#drawerClose').focus()} }
+function closeDrawer(){$('#drawer').classList.remove('show');$('#drawerScrim').classList.remove('show');openId=null}
+$('#drawerClose').onclick=closeDrawer; $('#drawerScrim').onclick=closeDrawer;
+$('#dNewVersion').onclick=()=>openUpload('version',openId);
+$('#dOpenDrive').onclick=()=>toast('Opens the current version in Google Drive');
+function archiveDoc(id,undo){ const x=byId(id); if(!x)return; x.archived=!undo; x.history.push({what:undo?'Restored to board':'Archived',by:role,at:new Date(TODAY)});
+  if(!undo){ closeDrawer(); render(); const h=$('#toastHost'); h.innerHTML=`<div class="toast"><span class="tdot"></span>${esc(x.id)} archived — off the board, still in the record <button class="toast-link" id="undoArch">Undo</button></div>`;
+    $('#undoArch').onclick=()=>archiveDoc(id,true); clearTimeout(h._t); h._t=setTimeout(()=>h.innerHTML='',6000); }
+  else { render(); if(openId===id)openDoc(id,true); toast(`${x.id} restored to the board`,'success'); } }
+$('#dArchive').onclick=()=>{ const x=byId(openId); if(!x)return; if(x.archived)archiveDoc(openId,true); else archiveDoc(openId,false); };
+
+/* ===== upload modal ===== */
+let upMode='new', upTarget=null, upParentsSel=[], upFile=null;
+function nextId(){ return 'DOC-'+String(Math.max(...DOCS.map(x=>+x.id.slice(4)))+1).padStart(4,'0'); }
+function openUpload(mode,targetId){ closeDrawer(); upMode=mode||'new'; upTarget=targetId?byId(targetId):null; upParentsSel=[]; upFile=null;
+  $('#upBody').hidden=false; $('#upFoot').hidden=false; $('#upBody').innerHTML=$('#upBody').innerHTML; /* reset */
+  bindUpload(); setUpMode(upMode); if(upTarget){ $('#upExisting').value=`${upTarget.title} (${upTarget.id})`; upParentsSel=[...upTarget.parents]; renderParentTags(); $('#upWp').value=upTarget.wp; $('#upType').value=upTarget.type; $('#upLvl').value=upTarget.level||''; $('#upDesc').value=upTarget.desc||''; }
+  $('#amWho').textContent=PEOPLE[role].name; $('#amWhen').textContent=fmtDT(TODAY); refreshAuto();
+  $('#upOvl').classList.add('show'); $('#upScrim').classList.add('show'); setTimeout(()=>$('#upOvl input:not([hidden]), #upOvl .drop')?.focus(),50); }
+function closeUpload(){$('#upOvl').classList.remove('show');$('#upScrim').classList.remove('show')}
+function setUpMode(m){ upMode=m; $$('#upMode button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m)); $('#upExistingWrap').hidden=m!=='version'; $('#upTitleWrap').hidden=m==='version'; $('#upNoteReq').hidden=m!=='version';
+  $('#upTitle').textContent=m==='version'?'Upload a new version':'Upload to Hyperspace'; refreshAuto(); }
+function refreshAuto(){ $('#amId').textContent=upMode==='version'&&upTarget?upTarget.id:nextId(); $('#amVer').textContent=upMode==='version'&&upTarget?'v'+(cur(upTarget).v+1):'v1'; }
+function lvlHint(){ const h=$('#upLvlHint'), lv=$('#upLvl').value; if(!h)return; const ps=upParentsSel.map(byId).filter(p=>p&&p.level);
+  if(!lv||!ps.length){h.hidden=true;return} const bad=ps.filter(p=>LEVELS[p.level].n>=LEVELS[lv].n);
+  h.hidden=!bad.length; h.className='hint err'; h.textContent=bad.length?`${bad.map(p=>p.id).join(', ')} is ${LEVELS[bad[0].level].l} level — a child usually sits below its parent.`:''; }
+function renderParentTags(){ const box=$('#upParents'); box.querySelectorAll('.tag').forEach(t=>t.remove()); lvlHint();
+  upParentsSel.forEach(pid=>{const p=byId(pid); const t=document.createElement('span'); t.className='tag'; t.innerHTML=`⌬ ${esc(p.title)} <span class="serial">${pid}</span><button class="tx" aria-label="Remove">✕</button>`; t.querySelector('.tx').onclick=()=>{upParentsSel=upParentsSel.filter(z=>z!==pid);renderParentTags()}; box.insertBefore(t,$('#upParentIn'))}); }
+function pickList(listEl,q,exclude,onPick){ const items=DOCS.filter(x=>!exclude.includes(x.id)&&(x.title.toLowerCase().includes(q)||x.id.toLowerCase().includes(q))).slice(0,8);
+  listEl.innerHTML=items.map(x=>`<button type="button" data-id="${x.id}"><span class="ftype ${x.type}" style="width:26px;height:20px;font-size:8.5px;display:inline-grid;place-items:center;border:1px solid var(--line-strong);border-radius:4px">${TYPE_LBL[x.type]}</span>${esc(x.title)}<span class="serial">${x.id}</span></button>`).join('')||'<button type="button" disabled class="muted">No matches</button>';
+  listEl.classList.toggle('open',!!q||items.length>0); listEl.querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{onPick(b.dataset.id);listEl.classList.remove('open')}); }
+function bindUpload(){
+  $$('#upMode button').forEach(b=>b.onclick=()=>setUpMode(b.dataset.mode)); $('#upLvl').onchange=lvlHint;
+  $('#upWp').innerHTML=WPS.map(w=>`<option>${w}</option>`).join('');
+  const ex=$('#upExisting'), exl=$('#upExistingList');
+  ex.oninput=()=>{upTarget=null;pickList(exl,ex.value.toLowerCase(),[],id=>{upTarget=byId(id);ex.value=`${upTarget.title} (${id})`;upParentsSel=[...upTarget.parents];renderParentTags();$('#upWp').value=upTarget.wp;$('#upType').value=upTarget.type;$('#upLvl').value=upTarget.level||'';$('#upDesc').value=upTarget.desc||'';lvlHint();refreshAuto()})};
+  ex.onfocus=()=>ex.oninput();
+  const pin=$('#upParentIn'), pl=$('#upParentList');
+  pin.oninput=()=>pickList(pl,pin.value.toLowerCase(),[...upParentsSel,upTarget?upTarget.id:''],id=>{upParentsSel.push(id);pin.value='';renderParentTags()});
+  pin.onfocus=()=>pin.oninput(); $('#upParents').onclick=()=>pin.focus();
+  document.addEventListener('click',e=>{if(!e.target.closest('.pick-wrap,.tagf'))$$('.pick-list').forEach(l=>l.classList.remove('open'))});
+  const drop=$('#drop'); const setFile=name=>{upFile=name;$('#dropFile').innerHTML=name?`<span class="file">⎙ ${esc(name)} <span class="tx" role="button" aria-label="Remove file">✕</span></span>`:'';
+    const tx=$('#dropFile .tx'); if(tx)tx.onclick=e=>{e.stopPropagation();setFile(null)}; if(name&&upMode==='new'&&!$('#upTitleIn').value)$('#upTitleIn').value=name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ');
+    const ext=(name||'').split('.').pop().toLowerCase(); if(['step','stp','sldprt','sldasm','catpart','iges','igs'].includes(ext))$('#upType').value='cad'; else if(ext==='pdf')$('#upType').value='pdf'; else if(ext==='gdoc')$('#upType').value='gdoc'; else if(ext==='gsheet')$('#upType').value='gsheet'; };
+  drop.onclick=()=>setFile(upMode==='version'&&upTarget?cur(upTarget).file.replace(/(_?v?\d+)?(\.[^.]+)$/,(m,n,e)=>`_rev${(cur(upTarget).v+1)}${e}`):'Pack_Thermal_Report.pdf');
+  drop.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();drop.click()}};
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')}; drop.ondragleave=()=>drop.classList.remove('over');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');const f=e.dataTransfer.files[0];setFile(f?f.name:'dropped_file.pdf')};
+}
+$('#uploadBtn').onclick=()=>openUpload('new'); $('#upClose').onclick=closeUpload; $('#upCancel').onclick=closeUpload; $('#upScrim').onclick=closeUpload;
+$('#upSubmit').onclick=()=>{ const note=$('#upNote').value.trim();
+  if(!upFile){toast('Add a file first','danger');return}
+  if(upMode==='version'&&!upTarget){toast('Pick the document this is a new version of','danger');return}
+  if(upMode==='version'&&!note){toast('A change summary is required for new versions','danger');return}
+  if(upMode==='new'&&!$('#upTitleIn').value.trim()){toast('Give the document a title','danger');return}
+  if(!$('#upLvl').value){toast('Tag the hierarchy level (aircraft, system, subsystem or component)','danger');return}
+  let doc; if(upMode==='version'){ doc=upTarget; doc.versions.push({v:cur(doc).v+1,file:upFile,by:role,at:new Date(TODAY),note}); doc.parents=[...new Set(upParentsSel)]; doc.wp=$('#upWp').value; doc.level=$('#upLvl').value; const nd=$('#upDesc').value.trim(); if(nd!==(doc.desc||'')){doc.desc=nd;doc.history.push({what:'Description updated',by:role,at:new Date(TODAY)})}
+      if(doc.status==='released'){doc.status='wip';doc.history.push({what:'Moved to Work in progress',by:role,at:new Date(TODAY)})} }
+  else { doc={id:nextId(),title:$('#upTitleIn').value.trim(),type:$('#upType').value,wp:$('#upWp').value,level:$('#upLvl').value,desc:$('#upDesc').value.trim(),status:'wip',by:role,parents:[...new Set(upParentsSel)],
+      versions:[{v:1,file:upFile,by:role,at:new Date(TODAY),note:note||'Initial upload.'}],history:[{what:'Created',by:role,at:new Date(TODAY)}]}; DOCS.unshift(doc); }
+  /* success pipeline — the moment that replaces every manual step */
+  const nodes=[['⛁','Drive'],['◈','Hyperspace DB'],['✦','Knowledge base'],['▦','Google Sheet'],['▦','Smartsheet']];
+  $('#upBody').innerHTML=`<div class="note in"><span>✓</span><span><b>${doc.id}</b> · ${esc(doc.title)} · <span class="mono">v${cur(doc).v}</span> — uploaded by ${PEOPLE[role].name}, ${fmtDT(TODAY)}</span></div>
+    <div class="pipe" id="pipe">${nodes.map(([i,l],n)=>`${n?'<span class="arrow"></span>':''}<span class="node" data-n="${n}"><i><span class="spinner"></span></i>${l}</span>`).join('')}</div>
+    <div class="hint mt-2" id="pipeHint">Metadata appended: contributor, timestamp, version, change summary, ID. Traceable from this moment.</div>`;
+  $('#upFoot').hidden=true;
+  nodes.forEach((_,n)=>setTimeout(()=>{const el=$(`#pipe .node[data-n="${n}"]`); if(!el)return; el.classList.add('ok'); el.querySelector('i').textContent='✓';
+    if(n===nodes.length-1){ $('#upFoot').hidden=false; $('#upFoot').innerHTML=`<span class="who">${doc.status==='wip'?'Now in Work in progress. Move it to "Braden to review" when it\'s ready.':''}</span><button class="btn" id="upDone">Done</button><button class="btn btn-brand" id="upOpen">Open ${doc.id}</button>`;
+      $('#upDone').onclick=closeUpload; $('#upOpen').onclick=()=>{closeUpload();openDoc(doc.id)}; }},350+n*260));
+  render(); toast(`${doc.id} v${cur(doc).v} uploaded`,'success'); };
+
+/* ===== controls ===== */
+$$('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;$$('[data-view]').forEach(z=>z.setAttribute('aria-pressed',z===b));render()});
+$$('#roleSeg button').forEach(b=>b.onclick=()=>{role=b.dataset.role;$$('#roleSeg button').forEach(z=>z.setAttribute('aria-pressed',z===b));$('#fMine').nextSibling.textContent=' Mine';render();if(openId)openDoc(openId,true);toast(`Acting as ${PEOPLE[role].name}`)});
+['#q','#fWp','#fWho','#fLvl','#fType','#fMine'].forEach(s=>$(s).addEventListener('input',()=>{const el=$(s); if(el.tagName==='SELECT')el.classList.toggle('changed',!!el.value); render()}));
+$('#reviewToggle').onclick=()=>{reviewing=!reviewing;$('#reviewToggle').setAttribute('aria-pressed',reviewing);$('#feedTitle').textContent=reviewing?'Bi-weekly review':'Engineering deliverables';render()};
+$('#reviewDays').onchange=e=>{reviewDays=+e.target.value;if(!reviewing)$('#reviewToggle').click();else render()};
+$$('#table th.sortable').forEach(th=>th.onclick=()=>{if(sortK===th.dataset.k)sortDir*=-1;else{sortK=th.dataset.k;sortDir=1}render()});
+if(window.matchMedia('(max-width:700px)').matches)$('#app').classList.add('side-collapsed');
+$('#sideCollapse').onclick=()=>$('#app').classList.add('side-collapsed'); $('#sideExpand').onclick=()=>$('#app').classList.remove('side-collapsed');
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=$('#dLvlMenu'); if(m&&m.classList.contains('open')){m.classList.remove('open');$('#dSetLvl').setAttribute('aria-expanded','false');return} closeDrawer();closeUpload()}});
+document.addEventListener('click',e=>{const m=$('#dLvlMenu'); if(m&&!e.target.closest('#dLvlMenu'))m.classList.remove('open'); const t=$('#dSetLvl'); if(t)t.setAttribute('aria-expanded','false')});
+$('#fWp').innerHTML+=WPS.map(w=>`<option>${w}</option>`).join(''); $('#fWho').innerHTML+=Object.entries(PEOPLE).map(([k,p])=>`<option value="${k}">${p.name}</option>`).join('');
+function toast(msg,kind){ const h=$('#toastHost'); h.innerHTML=`<div class="toast ${kind||''}"><span class="tdot"></span>${esc(msg)}</div>`; clearTimeout(h._t); h._t=setTimeout(()=>h.innerHTML='',3200); }
+render();
+</script>
+</body>
+</html>

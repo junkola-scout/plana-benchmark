@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" style="color-scheme: dark;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLANA — Due Diligence</title>
+<!--
+  ============================================================================
+  PLANA — DUE DILIGENCE ADMIN — lives inside the internal knowledge-management
+  system (PLANA Brain), reachable from the "Due Diligence" item under
+  Discovery in the left sidebar. This file is standalone and does NOT
+  require index.html to run — Duc/Braden can add Q&A directly via "+ Add
+  Q&A" with no investor question involved.
+
+  It *receives* a handoff from index.html (the public investor portal, on a
+  different host): when an investor asks something unanswered, the alert
+  email's "Open in PLANA →" button points here with
+  ?newq=…&qid=…&cat=…&askedBy=… — on load this file reads those params and
+  creates a pending card.
+
+  It *sends* a handoff back: once an answer is published, the "Preview the
+  notification email" action shows the investor-facing email, whose CTA
+  points back to index.html?answered=1&qid=…&q=…&a=…&cat=…&by=… so the
+  investor lands directly on their answered question.
+
+  It also *sends* invite handoffs: the "Send Invite" button (Invites tab)
+  lets ANY team member — not only Duc or Braden — grant a new person
+  invite-only access to index.html. The invite email's "Accept invite"
+  CTA points to index.html?invite=<token>&iid=…&iname=…&iemail=…&irole=…
+  &iby=…, which is the only way to reach the investor sign-up form (see
+  the SIGN-UP GATE comment in index.html).
+
+  See the CROSS-FILE HANDOFF comment in index.html for the production note
+  on replacing this URL-param handoff with real API calls + a database.
+  ============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ Brand tokens (matches PLANA Brain dashboard) ============
+   #e50602 red · #e56203 orange · #414042 gray · #000 · #fff   */
+:root{
+  --brand-red:#e50602;
+  --brand-orange:#e56203;
+  --brand-gray:#414042;
+  --bg:#0f0f10;
+  --surface:#1a1a1c;
+  --raised:#232326;
+  --line:#39383b;
+  --line-strong:#525155;
+  --text:#ffffff;
+  --muted:#a8a7ac;
+  --faint:#7c7b80;
+  --focus:#e56203;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px}
+body{
+  font-family:"Google Sans","Google Sans Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:
+    radial-gradient(2400px 850px at 50% 122%,
+      rgba(229,6,2,.38) 0%, rgba(229,62,3,.18) 30%, rgba(229,98,3,.07) 52%, transparent 72%),
+    #0c0c0d;
+  background-attachment:fixed;
+  color:var(--text);
+  font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button,select,textarea,input{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+[hidden]{display:none !important}
+a{color:inherit}
+
+/* ============ Dev bar (remove before shipping — orientation only) ============ */
+.dev-bar{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:10px;
+  padding:7px 18px;background:#000;border-bottom:1px solid var(--line-strong);flex-wrap:wrap;font-size:12px}
+.dev-bar b{color:var(--brand-orange)}
+.dev-bar a{color:var(--muted);text-decoration:underline;margin-left:auto}
+.dev-bar a:hover{color:var(--text)}
+
+/* ============ Shared components ============ */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);
+  border-radius:7px;padding:0 14px;min-height:34px;font-size:13px;background:var(--surface)}
+.btn:hover{background:var(--raised)}
+.btn-primary{background:linear-gradient(180deg,#fff,#e9e9ec);color:#000;border-color:#fff;font-weight:600}
+.btn-primary:hover{background:#e8e8e8}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;
+  border-radius:6px;padding:3px 9px;min-height:24px;letter-spacing:.02em}
+.chip.outline{border:1px solid var(--line-strong);color:var(--muted);font-weight:600}
+.chip.dashed{border:1px dashed var(--line-strong);color:var(--muted);font-weight:600}
+.chip.new{background:linear-gradient(120deg,var(--brand-red),var(--brand-orange) 140%);color:#fff}
+.card{background:linear-gradient(180deg,#1e1e21 0%,var(--surface) 55%,#18181a 100%);
+  border:1px dashed var(--line-strong);border-radius:10px;
+  padding:16px 18px;margin-bottom:16px;position:relative}
+.card.reviewed{opacity:.5}
+.empty{border:1px dashed var(--line-strong);border-radius:10px;padding:40px;text-align:center;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;width:fit-content}
+.seg button{padding:0 14px;min-height:34px;font-size:13px;color:var(--muted);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:none}
+.seg button:hover{color:var(--text);background:var(--raised)}
+.seg button[aria-pressed="true"]{background:#fff;color:#000;font-weight:700}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid var(--line-strong);
+  border-top-color:var(--brand-orange);animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes winIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.win-in{animation:winIn .3s ease both}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:300;
+  background:linear-gradient(180deg,#1e1e21,#141416);border:1px solid var(--brand-orange);
+  border-radius:10px;padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:8px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);animation:toastIn .25s ease both}
+.toast .tdot{width:7px;height:7px;border-radius:50%;background:var(--brand-orange);flex-shrink:0}
+.toast-link{color:var(--brand-orange);text-decoration:underline;font:inherit;white-space:nowrap;padding:0}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:5px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============ Overlay / modal ============ */
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:186;opacity:0;pointer-events:none;transition:opacity .2s}
+#scrim.show{opacity:1;pointer-events:auto}
+#emailOvl{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,94vw);
+  max-height:84vh;display:none;flex-direction:column;z-index:187;
+  background:linear-gradient(180deg,#1e1e21 0%,var(--surface) 30%,#161618 100%);
+  border:1px solid var(--line-strong);border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.65);overflow:hidden}
+#emailOvl.show{display:flex}
+.mo-head{display:flex;align-items:flex-start;gap:12px;padding:16px 20px 13px;border-bottom:1px solid var(--line)}
+.mo-head h5{font-size:15px;font-weight:700;line-height:1.3;flex:1}
+.mo-close{width:26px;height:26px;border-radius:6px;color:var(--muted);flex-shrink:0}
+.mo-close:hover{background:var(--raised);color:var(--text)}
+.mo-body{overflow-y:auto;padding:16px 20px 20px}
+.email-meta{font-size:12px;color:var(--muted);line-height:1.9;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px}
+.email-meta b{color:var(--text);font-weight:600}
+.email-body{font-size:13.5px;color:var(--text);line-height:1.7}
+.email-body p{margin-bottom:12px}
+.email-cta{display:inline-block;margin-top:6px}
+
+/* light-mode transactional email preview — the investor-facing "answered"
+   notification. Deliberately light (not the dark app theme): renders
+   reliably across every email client and matches inbox expectations. */
+.email-light{background:#f4f4f5;border-radius:10px;overflow:hidden;font-family:"Google Sans","Google Sans Text",-apple-system,sans-serif}
+.el-head{background:#0f0f10;padding:16px 22px}
+.el-logo{color:#fff;font-weight:800;font-size:15px;letter-spacing:.02em}
+.el-body{background:#ffffff;padding:26px 24px 30px;color:#1a1a1c}
+.el-eyebrow{font-size:10.5px;letter-spacing:.1em;color:#e56203;font-weight:800;margin-bottom:8px}
+.el-body h3{font-size:19px;font-weight:800;color:#111;margin-bottom:12px}
+.el-body p{font-size:13.5px;color:#414042;line-height:1.65;margin-bottom:14px}
+.el-quote{border-left:3px solid #e56203;background:#f9f4ef;padding:10px 14px;font-size:13.5px;
+  color:#1a1a1c;font-style:italic;margin-bottom:18px;border-radius:0 6px 6px 0}
+.el-cta{display:inline-block;background:linear-gradient(120deg,#e50602,#e56203 140%);color:#fff;
+  font-weight:700;font-size:13.5px;padding:11px 22px;border-radius:8px;text-decoration:none;margin-bottom:18px}
+.el-foot{font-size:12px;color:#7c7b80;margin-bottom:0}
+
+/* Add Q&A modal */
+#addQaOvl,#inviteOvl{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,94vw);
+  max-height:88vh;display:none;flex-direction:column;z-index:187;
+  background:linear-gradient(180deg,#1e1e21 0%,var(--surface) 30%,#161618 100%);
+  border:1px solid var(--line-strong);border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.65);overflow:hidden}
+#addQaOvl.show,#inviteOvl.show{display:flex}
+.aq-field{margin-bottom:14px}
+.aq-field label{display:block;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);
+  font-weight:700;margin-bottom:6px}
+.aq-field input,.aq-field select{width:100%;min-height:38px;background:var(--raised);border:1px solid var(--line-strong);
+  border-radius:8px;padding:0 12px;font-size:13.5px;color:var(--text)}
+.aq-field input::placeholder{color:var(--muted)}
+.aq-field textarea{width:100%;min-height:96px;background:var(--raised);border:1px solid var(--line-strong);
+  border-radius:8px;padding:10px 12px;font-size:13.5px;color:var(--text);resize:vertical;line-height:1.6}
+.aq-field textarea::placeholder{color:var(--muted)}
+.aq-row2{display:flex;gap:12px}
+.aq-error{color:var(--brand-red);font-size:12.5px;margin:-4px 0 12px}
+.aq-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+
+/* ================================================================
+   PLANA app shell
+   ================================================================ */
+#planaView{display:grid;grid-template-columns:236px 1fr;min-height:calc(100vh - 33px)}
+.sidebar{border-right:1px solid var(--line);
+  background:linear-gradient(180deg,#1d1d20 0%,var(--surface) 30%,#161618 100%);
+  display:flex;flex-direction:column}
+.ws{padding:18px 16px 14px;border-bottom:1px solid var(--line)}
+.ws img{display:block;height:28px;width:auto;margin-left:-4px}
+.ws-sub{font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:.03em}
+.side-scroll{flex:1;overflow-y:auto;padding:12px 10px}
+.side-label{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
+  font-weight:700;padding:10px 8px 6px}
+.side-item{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:8px 10px;min-height:36px;border-radius:7px;font-size:13.5px;color:var(--text)}
+.side-item:hover{background:var(--raised)}
+.side-item.active{background:var(--raised);font-weight:600;box-shadow:inset 3px 0 0 var(--brand-orange)}
+.side-item .ico{width:16px;text-align:center;color:var(--muted)}
+.side-item .cnt{margin-left:auto;font-size:11px;font-weight:700;background:var(--brand-orange);color:#fff;
+  border-radius:99px;padding:1px 7px;min-width:18px;text-align:center}
+.side-item.disabled,.side-item.disabled:hover{background:none;color:var(--faint);cursor:not-allowed;opacity:.55}
+a.side-item,.side-item.ext{text-decoration:none}
+.side-item .ext-mark{margin-left:auto;font-size:11px;color:var(--faint)}
+.side-foot{border-top:1px solid var(--line);padding:12px}
+.user{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:6px;border-radius:8px}
+.user:hover{background:var(--raised)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--brand-gray);color:#fff;
+  display:grid;place-items:center;font-size:12px;font-weight:700}
+.user b{font-size:13px;display:block}
+.user span{font-size:12px;color:var(--muted)}
+
+.main{min-width:0}
+.topbar{display:flex;align-items:center;gap:14px;padding:12px 26px;border-bottom:1px solid var(--line);
+  background:var(--bg);position:sticky;top:33px;z-index:39}
+.crumbs{font-size:12.5px;color:var(--muted)}
+.crumbs b{color:var(--text);font-weight:600}
+.dd-page{max-width:1080px;margin:0 auto;padding:22px 26px 70px}
+.dd-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.dd-head h1{font-size:20px;font-weight:800}
+.dd-head p{font-size:12.5px;color:var(--muted);margin-top:4px}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat{background:linear-gradient(180deg,#1e1e21,#18181a);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.stat .n{font-size:24px;font-weight:800}
+.stat .l{font-size:11.5px;color:var(--muted);margin-top:2px;letter-spacing:.02em}
+
+.dd-tabs{margin-bottom:18px}
+
+/* pending question card */
+.pq-top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.pq-top h4{font-size:15.5px;font-weight:700;flex:1;line-height:1.4}
+.pq-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.pq-meta b{color:var(--text);font-weight:600}
+.pq-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.pq-answer{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+.pq-answer textarea{width:100%;min-height:84px;background:var(--raised);border:1px solid var(--line-strong);
+  border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);resize:vertical;line-height:1.6}
+.pq-answer textarea::placeholder{color:var(--muted)}
+.pq-row2{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.pq-row2 select{background:var(--surface);border:1px solid var(--line-strong);border-radius:7px;
+  padding:0 10px;min-height:32px;font-size:12.5px;color:var(--text)}
+.pq-status{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--brand-orange)}
+.pq-status.done{color:#7bd88f}
+
+/* library item */
+.lib-item{border-bottom:1px solid var(--line);padding:13px 2px;display:flex;gap:12px;align-items:flex-start}
+.lib-item:last-child{border-bottom:none}
+.lib-item .li-body{flex:1}
+.lib-item h4{font-size:13.5px;font-weight:600}
+.lib-item p{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.6}
+.lib-meta{display:flex;gap:7px;align-items:center;margin-top:8px;flex-wrap:wrap}
+
+/* highlight for a pending card that just arrived from the investor portal */
+@keyframes flashHi{0%{box-shadow:0 0 0 0 rgba(229,98,3,.55);background:rgba(229,98,3,.14)}100%{box-shadow:0 0 0 0 rgba(229,98,3,0);background:transparent}}
+.card.flash{animation:flashHi 1.8s ease-out 2}
+
+/* ============ Invites tab ============ */
+.inv-note{border:1px dashed var(--line-strong);border-radius:10px;padding:12px 14px;margin-bottom:16px;
+  font-size:12.5px;color:var(--muted);display:flex;gap:9px;align-items:flex-start}
+.inv-note b{color:var(--text)}
+.invite-item{border-bottom:1px solid var(--line);padding:13px 2px;display:flex;gap:12px;align-items:center}
+.invite-item:last-child{border-bottom:none}
+.invite-item .ii-body{flex:1;min-width:0}
+.invite-item h4{font-size:13.5px;font-weight:600}
+.invite-item p{font-size:12px;color:var(--muted);margin-top:3px}
+.invite-item .ii-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.chip.status-pending{border:1px solid var(--line-strong);color:var(--muted)}
+.chip.status-accepted{background:#1f3a28;color:#7bd88f;border:1px solid #2f5c3c}
+.btn-sm{min-height:28px;padding:0 11px;font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- Dev bar — orientation for whoever is testing the prototype. Delete this div when shipping. -->
+<div class="dev-bar">
+  <span>📄 <b>dd-admin.html</b> — PLANA internal admin (knowledge-management system)</span>
+  <a href="index.html" target="_blank">Open index.html (investor portal) →</a>
+</div>
+
+<div id="planaView">
+  <div class="sidebar">
+    <div class="ws">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAACOCAYAAADHGPqZAAAACXBIWXMAAAc3AAAHNwGj9amOAAAQOUlEQVR4nO3d7XnbthrG8Tvn6ne7E1idIO4EYSeoO4HZCaIzQeAJjjpB6AnqTFBlgjoTVJ6g9gQ+HxBWqiI8fBFJEOD/d12++kLLgi2SNwHwAd+8vr4KAACk7T+xGwAAAM5HoAMAkAECHQCADBDoAABkgEAHACADBDoAABkg0AEAyACBDgBABgh0AAAyQKADAJABAh0AgAwQ6AAAZIBABwAgAwQ6AAAZINABAMgAgQ4AQAYIdAAAMkCgAwCQAQIdAIAMEOgAAGSAQAcAIAMEOgAAGSDQAQDIAIEOAEAGCHQAADJAoAMAkAECHQCADBDoAABkgEAHACADBDoAABlYeqCvJL0efLmYjQEAoC8CHQCADCw90I9dx24AAAB9LD3Qi6P/vozRCAAAzrX0QD+2it0AAAD6WHqgHw+xX0VpBQAAZ1p6oJ8aYmfYHQCQHAL9W9wYBwBIztID/W3sBgAAMISlB/op9NABAMlZcqAXgf/PHDoAIDlLDvSQVewGAADQ1ZIDPTS0vpqyEQAADGHJgc7QOgAgGwT6t95N2goAAAaw5EDnbvZvbfXvx8nO+etR0oP8I2/H+CwL473R3VrNn2kVq3GGQmm2+xSn0+3fxmuSyan5b+8itW2WlhzoFsJ+/t5K+lnSB0l/StrJhwZTKfNzqXYn3luleezdimAZ2kr+2G6yFvc9/WPJgW4NrRMK6bmS9D/5YL+J2xQccZIuWn7vZsR2jOmDpDJ2IzLiWn7fRYfvzd6SA92yit0A9HYh6XelMwyau5Wk9x2+/53Ca0TM3UcR6kMo5Ec92kp1ZGdwMQP9Ur435TR9gDa9X9P2MZSidzmkWxHqc9Cnx10N3YgJEerncz1ek+rIzqC+i/jeTn6Y9MPXr3v5D+VxgvdeTfAebVzKzwGttR+S3MjfpPIcqU2nPMlfbMR2rfZDt9L+Kr8cvilooZC/z+GUF/l9/NQji6/kP7NqjEZN4KP87/YQuyEJKhWeDn35+s9T54B38p2hRf/NYwX6St8Ow91+/fosfyBXI75/0xx5MeJ7S/73dzo9rHQlH/Bu5DZ0UWle7bmW/4xu1FxmeCt/kC/6QI/EGdvqC9c/jO0PmteF7bEnnb4gkfwxU2iaDkpOnLFt/fWfHwPb631msWINuT9L+hTY9k7+A9tpvLuWY823FPInsb8UniN60sJ3yhYe5Q/eQtIP8heBFobjplcqfLH1pH2gh84DF9qfwOfqRvte47EL+d+Pud32nMIXSE/ad/RCx3vdGVqsmIF+I+m/xvcc3rW80bTD5EMfhKX87/GH7B7lp6/vzVV9ezv5YL83vqcewsU0msrUnPY9b+sEPPeSpEf5fY9QP189/RhSHvy7M77PacFVSrHvct9I+lHSF+N7LuSH5//SfhjrXE0/o8s8bUh9UnuWH3EIXXlK/oTwq/xFzpyHGOeslB3qi75yn9ha4f39i/49nbaT9Fvge1MoSWob6qtpmpMsp/B597P+vfjNVmmP7IwmdqBL+wPCOhnXbuV7uVuN3+Pqe5W3kj9h/S1/s1/TxcEX+d+/6vl+2FsrfGJ9K06qU2jqaZ3a5hT+3G41/zK2NqH+oAX3HBusZJc2ntpnrH3sgxZ6rM8h0CXfKy0l/aLwQXHo3Hn2VYvv6TpMVqh5fvzYb+LGmSE9y54vLyZqx5Jt1L6nVWv63Nx5TZrEo+yQeSv/uxPq36qMbfc6fX7cKTyyI6WxzwxuLoFee5APUmsI/lDfeXZr+LuLS7WfHz/0In/xshZD7EOzbihkLnNc17IvZktjm5O/8emUuiRp7ir5qbMQQv1bhewyNesiySntkZ3BzS3QJR+O15LuOrymyzx724PJ+hkr+Z1pp+b58WOf5X8/7mQfhzXaQaCPy+pl/6bmtQxcz589J5XahTo863PdyO7w5DCyM6g5BnrNSfpJ7YbgDzXNs59zUr+WP2D/Urv58WN38hcKuzPagGZtR3gwnEJ2T8u1+BmV8ihJqtQc6tUkLZm3Uv5vcUpd2tjEyR7ZKbs2KmVzDnRpf3do6I5Gy7nz7IfBf/O1LX+q2xrDtSf5ixPX47XojmmM6VXGtqae1iHXsC2V4epK9o2+S1+a+FLNveu2+0zTsPxizD3QpXY165bjefa2c3Er7efHf1f7+fFjdW35tufrgbkrZS8I4jr8rK3yKUkqRaiHrBUe4TwubWzyIHtkx3X4WUlLIdBrbWrWLfU8e9snP71V9/nxQy/yFyHUlk+v78UXumvT0+oqp5KkUs2hnsr9AUNZqXtpYxPX8PNSGdk5S0qBLnWrWY+pri1f2oE6Bytj226iNiyJ1dOqn8vQ1U52SVJqx1Up+5z1Xsua63UK7zOf1G80c6vw3ziFBYoGkVqgS91r1qdGbXlc1pTKbqpGLMRKvscc4s742U7h4/tnpVeSVMoeXVzKY1ebShvPmVJxxrb3Smtkp5cUA73WtWZ9bNSWz4N1QthO1YiFcMa2vj2tWo4lSYUI9XNLGy072eXOqY3sdJZyoEv7mnVreG4K1JbPg7WG+IsI9CEVGq+nVXPKqyTpWcsO9RudX9rYZKO8RnY6ST3Qa2v1q1kfArXl81DKVzOEVNM0YzGcse1Owx0P1vtY2+aqTahvlOciSOcsItPWs/LbZ1rLJdClfc1607Oxh0Jt+Xw4+Z5NyIsWMNw2oVJ2T2vIv3Wl/EqS6lBf0mNXrdGzrqWNTTbKa2SntZwCXdofKH1r1tuitjy+a/mTxE72jVmSP8B3I7dnSVzDtqHvIbHeL9WSpCWF+qWaP8OhNS02k+I+0+i72A0YyUb+YNhqmGebH7pTmr2Cc5Sa19xTlzrzz1re5zUmJ7unNcZIyFa+JOnUnH1dkpTSgjO1ugx3q9PnqTrUC6VdNeNklzaOce9RvdjMqXNFvYywG+F9o3rz+voauw1jqBe76LNMa5Mv8gGX8gEWslVei7LU6wH06TEW8s8EOOVNz/ak7lJ+pCN0cv5F490YupJ/hkLIDxpnFKbQ+PtBPdpnrZxW6PyRD6fTo1mfNd4F+0r25/aTxhvpLBT+7F7k25ZVRVJuQ+7S/uAYI8yl/dOSUuwRLMknDXMSxJ7T9D2t2k75liQ9yl4/IeXHrlqfy73Gnbbcyl5sJuV95qTcAn0t/wCV0BN8hnIhf0f1g9I8yHL2Iv+kK5bcHdZK9rLJU1zg5lyStFV+z1Iv5D+XEDdBG6z3uFVmi83kEuiX8uFqlS2N4Wft58EQ15P8zZArUaI2hsrYdq9ppqCaSpJS73FVyivUnbFtyNJGy072yE41QRsmk0OgF/IfmnUlOKYr+XkaF+n9l+pJflj9Tv6hPSsNV8uKfys0/oIgbVklSW+VfklSpeZQT+HCpdR0pY1NrJGdd8qoQ5b6Xe5OzSVLU/kgv2OUyq9E6l7zuZJ9FKE9taYFQXYTtaO2ln+k8SlOfrQu5X2kku+Fh0Yc6/uDyika00ObMrUpP596ZCf098xmIZ9UA30lf9COPVfe1Tv5wCmV1zKwO1Fzv1SlwsdZrAV7llCSVIdM6ObeOYd60yIy1XRN+cdG4XbVIzvVhO0ZRYpD7jfyoTm3MK9dyPceUhgWAyx1+WfIhaS/Jb1G+LLKK1NdbOZYqeZnqVeTtKS9S9k3SF4pzv7yqvBFhpTJYjMpBXp9cvld5y0WE5p/O/ai89aGfy9/4ZHFUA4Waa3hF2aaQk4lSaWaQ72cpCXtbJTmPlOP7CQtlUCva8utshnLi/wT2X5Q+6G4R/mh/V/V/iLgWH1Xatnz9UAsK6V9gsupJKmUHepzeUKbNUWQgrUS32dSCPS1fCj2GWI/LGWq1/3etXxtffNV9fX1v6jfg18u5A84ataREqc0e1qHqtgNGNBa83/sauqjIvUywsmac6Af1pZ3PbF8lu9Zr/RtKVPbuyuPv+9B/i72H2VfLYfUNesMwWPuUu9p1XIqSaof5jLXUC+Ux7LRt0r4HD3XQC/kw69rbfm9/NrAhcJX520XwNgZry/lh+/v1G2e/Up+JTvX4TXA1FLvaR3K6XdpG+oxAqmK8J5jSXafmWOgO/mFWqw7Eg8dzo+XGq68atdiu1O/efYPSmvFJyzHjewFQb6XfyjJ3L5yXmzmUJtQ32raUC9ll6nF3jdOfX2vDBebmVOgr+R3xLYLxZyaH2+rz1x4SN959nfybbYeygBMzeqdOM13wRbrBr6N8rp4fpYP0Tk8S72ptHGuN1Y+y25bNVE7BjWXQK9ry9vMwVjz40Pa9nhN13l2atYxJ00Lgsx5P60XmznlQvMNlr7qZ0jEDnWrtPGz5r3AVqXwyM6VEhzZiR3oXWrL28yPt7U78/VNus6zU7OO2JqW6yynacZZrNBOviTphDahPmZ1zUr2iKob6X2HVBrbkhvZiRnobWrLY82PW/NTXd/Hqd08OzXriMnJ7mltJ2tJf4+yn3/tpmvKZJpC/Urj3a/jjG33SmOf2SqjkZ1YgV6Heai2/Jz58TaahumHHsY/nGf/SfYO9FF5nngwXyvFf9b5UJzC4ZZ0SZKhHhEMGeOxq4Xs0kY34HuNzdq/PyihkZ1YgV4v2nJsqvnxptK13UjvK/kDq5AfdQj1JrYjvj9wzJobv9c0zzofyk7NT4fL0YOaH7vad6XNU5yx7U5pPXHSGtmREro4iTnkfnhVNOT8+BB2E71HKV8+cTjP/kkE+tzFerhE36/C+F0Khdd7mPpZ50PZKMOSpBYq2aE+lFLzedb5UNayR3aK6ZrSX8xAf5AfVh96fryNOfU4nrV/0s+vSmt4E+lzxraN0upp1bIsSWqp0vih7oxta823tNHyrOaSzdmLfZd7rBNG0w63naIRJ1RK8wSKNJXKr6dVq2SXJOV84VzJj/qNwWl+zzofykbhfeadElgzJHagx2TdcQ7krqlMLdWe1qHS2OaUWElSR079njlhuZR9IVQO/H5Tq0dLQ2Z/gbvkQN8Z2+Y0JA+MwVpE5ovS7mnVtsqoJKmHUsOG+kbplzY2qRQuW579yM53sRsQkdX7SL1n0lfoQmY3ZSNm4lnDLhEc06n9+Vrh38+N15TJlQpfnBQtXp/6flDK/w5WuV7bDsxK4b/FrIOuo7XCx0ChGffU37y+vsZuQyxOp1c5elHeQ3EAgAwtecg9hOF2AEBylhzoBDcAIBtLDvTQPPl2ykYAADCEJQf6LnYDAAAYCoHe/v8DADBbSw70kF3sBgAA0NXSA/1UTeVSa9ABAAlbeqCfwt3vAIDkLD3QCW8AQBaWHujHw+spL/EIAFiwpQf6LnYDAAAYAoFu/zcAAElYeqAf28VuAAAAfSz58amSX+b17ui/AQBIzpIfnwoAQDYYcgcAIAMEOgAAGSDQAQDIAIEOAEAGCHQAADJAoAMAkAECHQCADBDoAABkgEAHACADBDoAABkg0AEAyACBDgBABgh0AAAyQKADAJABAh0AgAwQ6AAAZIBABwAgAwQ6AAAZINABAMgAgQ4AQAYIdAAAMkCgAwCQAQIdAIAMEOgAAGSAQAcAIAMEOgAAGSDQAQDIAIEOAEAG/g/8Du1YmOCDYAAAAABJRU5ErkJggg==" alt="PLANA">
+      <div class="ws-sub">Intelligence Operating System</div>
+    </div>
+    <div class="side-scroll">
+      <div class="side-label">Dashboard views</div>
+      <button class="side-item disabled"><span class="ico">⚡</span>Me</button>
+      <button class="side-item disabled"><span class="ico">⇄</span>Work Package</button>
+      <button class="side-item disabled"><span class="ico">▣</span>The Business</button>
+
+      <div class="side-label">Launchpad</div>
+      <a class="side-item ext disabled"><span class="ico">◧</span>Jira<span class="ext-mark">↗</span></a>
+      <a class="side-item ext disabled"><span class="ico">◧</span>Smartsheet<span class="ext-mark">↗</span></a>
+      <a class="side-item ext disabled"><span class="ico">✉</span>Gmail<span class="ext-mark">↗</span></a>
+      <a class="side-item ext disabled"><span class="ico">▤</span>Drive<span class="ext-mark">↗</span></a>
+
+      <div class="side-label">Discovery</div>
+      <button class="side-item disabled"><span class="ico">▤</span>Group Knowledge</button>
+      <button class="side-item active"><span class="ico">⌕</span>Due Diligence<span class="cnt" id="sideCnt">0</span></button>
+      <a class="side-item" href="../document-manager/document-manager.html"><span class="ico">▤</span>Document Manager</a>
+      <button class="side-item disabled" disabled title="Coming soon"><span class="ico">✈</span>FAA Doc Sync<span style="margin-left:auto;font-size:9.5px;letter-spacing:.06em;color:var(--faint)">SOON</span></button>
+    </div>
+    <div class="side-foot">
+      <button class="user">
+        <div class="avatar">SU</div>
+        <div>
+          <b>Scout Underwood</b>
+          <span>Admin</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="crumbs">PLANA Co. Brain / Discovery / <b>Due Diligence</b></div>
+    </div>
+    <div class="dd-page">
+      <div class="dd-head">
+        <div>
+          <h1>Due Diligence — Answer Engine</h1>
+          <p>Questions the investor chatbot couldn't answer land here. Publish an answer and it's pushed straight back to the investor portal.</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn" onclick="openInvite()">✉ Send Invite</button>
+          <button class="btn btn-primary" onclick="openAddQa()">+ Add Q&amp;A</button>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat"><div class="n" id="statPending">0</div><div class="l">PENDING QUESTIONS</div></div>
+        <div class="stat"><div class="n" id="statPublished">0</div><div class="l">PUBLISHED THIS SESSION</div></div>
+        <div class="stat"><div class="n">~4 hrs</div><div class="l">AVG RESPONSE TIME</div></div>
+        <div class="stat"><div class="n" id="statLibrary">0</div><div class="l">TOTAL Q&amp;A LIBRARY</div></div>
+      </div>
+
+      <div class="seg dd-tabs" role="tablist">
+        <button aria-pressed="true" onclick="setDdTab('pending')" id="ddTabPending">Pending</button>
+        <button aria-pressed="false" onclick="setDdTab('library')" id="ddTabLibrary">Published Library</button>
+        <button aria-pressed="false" onclick="setDdTab('invites')" id="ddTabInvites">Invites<span class="cnt" id="inviteCnt" style="display:none;margin-left:6px"></span></button>
+      </div>
+
+      <div id="pendingPane"></div>
+      <div id="libraryPane" hidden></div>
+      <div id="invitesPane" hidden></div>
+    </div>
+  </div>
+</div>
+
+<!-- Email preview modal (notification-to-investor preview) -->
+<div id="scrim" onclick="closeModals()"></div>
+<div id="emailOvl">
+  <div class="mo-head">
+    <h5 id="emailSubject">Email preview</h5>
+    <button class="mo-close" onclick="closeModals()">✕</button>
+  </div>
+  <div class="mo-body" id="emailBody"></div>
+</div>
+
+<!-- Add Q&A modal (add an answer directly, no investor escalation needed) -->
+<div id="addQaOvl">
+  <div class="mo-head">
+    <h5>Add a question &amp; answer</h5>
+    <button class="mo-close" onclick="closeModals()">✕</button>
+  </div>
+  <div class="mo-body">
+    <div class="aq-field">
+      <label>Question</label>
+      <input id="aqQuestion" type="text" placeholder="e.g. What is your policy on remote work?">
+    </div>
+    <div class="aq-field">
+      <label>Answer</label>
+      <textarea id="aqAnswer" placeholder="Type the verified answer…"></textarea>
+    </div>
+    <div class="aq-row2">
+      <div class="aq-field" style="flex:1">
+        <label>Category</label>
+        <select id="aqCategory"></select>
+      </div>
+      <div class="aq-field" style="flex:1">
+        <label>Answered by</label>
+        <select id="aqBy">
+          <option>Scout Underwood</option>
+          <option>Duc Nguyen</option>
+          <option>Braden Miller</option>
+        </select>
+      </div>
+    </div>
+    <div id="aqError" class="aq-error" hidden>Both a question and an answer are required.</div>
+    <div class="aq-actions">
+      <button class="btn" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddQa()">Publish to Wiki →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Send Invite modal — any team member can invite an investor into the
+     invite-only portal (index.html). Not limited to Duc/Braden: the
+     "Invited by" list is the same team roster used everywhere else in
+     this app (e.g. the "Answered by" select above). -->
+<div id="inviteOvl">
+  <div class="mo-head">
+    <h5>Invite someone to the data room</h5>
+    <button class="mo-close" onclick="closeModals()">✕</button>
+  </div>
+  <div class="mo-body">
+    <div class="aq-field">
+      <label>Name</label>
+      <input id="ivName" type="text" placeholder="e.g. Philippe Investor">
+    </div>
+    <div class="aq-field">
+      <label>Email</label>
+      <input id="ivEmail" type="email" placeholder="name@firm.com">
+    </div>
+    <div class="aq-row2">
+      <div class="aq-field" style="flex:1">
+        <label>Role</label>
+        <select id="ivRole">
+          <option>Investor/lender</option>
+          <option>Lawyer</option>
+          <option>Accountant</option>
+          <option>Consultant</option>
+          <option>Founder/executive</option>
+          <option>Board member</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="aq-field" style="flex:1">
+        <label>Invited by</label>
+        <select id="ivBy">
+          <option>Scout Underwood</option>
+          <option>Duc Nguyen</option>
+          <option>Braden Miller</option>
+        </select>
+      </div>
+    </div>
+    <div class="aq-field" id="ivOtherWrap" hidden>
+      <label>Describe role</label>
+      <input id="ivOtherDesc" type="text" placeholder="e.g. Insurance broker">
+    </div>
+    <div id="ivError" class="aq-error" hidden>Name and a valid email are required.</div>
+    <div class="aq-actions">
+      <button class="btn" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitInvite()">Send invite →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS = ["Data Room","Economic / Business Model","Budgets","Cap Table","Team & Org","Market"];
+
+/* Local library — mirrors index.html's SEED_FAQ count so the "Total Q&A
+   Library" stat reads consistently across both files. In production both
+   pages should read this count from the same database. */
+const SEED_LIBRARY_COUNT = 12;
+
+/* ============================================================
+   State
+   ============================================================ */
+let state = {
+  library: SEED_LIBRARY_COUNT,   // count only — full library content lives in index.html for this prototype
+  pending: [],
+  publishedCount: 0,
+  invites: [],   // {id, token, name, email, role, by, sent, status:'pending'|'accepted'}
+  seq: 1000
+};
+
+function init(){
+  renderPending(); renderLibrary(); renderInvites(); updateStats();
+  handleIncomingQuestion();
+}
+
+function setDdTab(t){
+  document.getElementById('pendingPane').hidden = t!=='pending';
+  document.getElementById('libraryPane').hidden = t!=='library';
+  document.getElementById('invitesPane').hidden = t!=='invites';
+  document.getElementById('ddTabPending').setAttribute('aria-pressed', t==='pending');
+  document.getElementById('ddTabLibrary').setAttribute('aria-pressed', t==='library');
+  document.getElementById('ddTabInvites').setAttribute('aria-pressed', t==='invites');
+  if(t==='invites') renderInvites();
+}
+function escapeAttr(s){ return String(s).replace(/'/g,"\\'"); }
+
+/* ============================================================
+   Pending + library
+   ============================================================ */
+function renderPending(){
+  const el = document.getElementById('pendingPane');
+  if(!state.pending.length){
+    el.innerHTML = `<div class="empty">No pending questions right now. When an investor asks something the portal can't answer, it lands here.</div>`;
+    return;
+  }
+  el.innerHTML = state.pending.map(p=>`
+    <div class="card win-in" id="pq-${p.id}">
+      <div class="pq-top">
+        <h4>${p.q}</h4>
+      </div>
+      <div class="pq-meta">Asked by <b>${p.askedBy||'Investor'}</b> · flagged just now · suggested category: <b>${p.cat}</b></div>
+      <div class="pq-answer">
+        <textarea id="ans-${p.id}" placeholder="Type the answer Duc or Braden would give…"></textarea>
+        <div class="pq-row2">
+          <select id="cat-${p.id}">${CATS.map(c=>`<option ${c===p.cat?'selected':''}>${c}</option>`).join('')}</select>
+          <button class="btn btn-primary" onclick="publishAnswer(${p.id})">Publish to Wiki →</button>
+          <div class="pq-status" id="status-${p.id}"></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function publishAnswer(id){
+  const idx = state.pending.findIndex(p=>p.id===id);
+  if(idx<0) return;
+  const p = state.pending[idx];
+  const ta = document.getElementById('ans-'+id);
+  const text = ta.value.trim();
+  if(!text){ ta.focus(); ta.style.borderColor='var(--brand-red)'; return; }
+  const cat = document.getElementById('cat-'+id).value;
+  const by = 'Braden Miller';
+  const statusEl = document.getElementById('status-'+id);
+  statusEl.innerHTML = `<div class="spinner"></div> Wiki processing…`;
+  setTimeout(()=>{
+    statusEl.innerHTML = `✓ Published — investor notified`;
+    statusEl.classList.add('done');
+    const card = document.getElementById('pq-'+id);
+    card.classList.add('reviewed');
+    setTimeout(()=>{
+      state.pending.splice(idx,1);
+      state.publishedCount++;
+      state.library++;
+      renderPending(); renderLibrary(); updateStats();
+      const shortQ = p.q.slice(0,40)+(p.q.length>40?'…':'');
+      const previewLink = `<button class="toast-link" onclick="openNotifyEmail('${escapeAttr(p.q)}','${escapeAttr(text)}','${escapeAttr(cat)}','${escapeAttr(by)}', ${id})">Preview the notification email →</button>`;
+      showToast(`✓ ${by} published an answer to "${shortQ}" · investor notified by email · ${previewLink}`, 7000);
+    }, 900);
+  }, 1200);
+}
+function renderLibrary(){
+  const el = document.getElementById('libraryPane');
+  el.innerHTML = `<div class="empty">The full published library lives on the investor portal (index.html) and, in production, in your shared Q&amp;A database. This admin view focuses on triage: pending questions in, verified answers out.</div>`;
+}
+function updateStats(){
+  document.getElementById('statPending').textContent = state.pending.length;
+  document.getElementById('statPublished').textContent = state.publishedCount;
+  document.getElementById('statLibrary').textContent = state.library + '+';
+  document.getElementById('sideCnt').textContent = state.pending.length;
+  document.getElementById('sideCnt').style.display = state.pending.length ? 'inline-block' : 'none';
+  const pendingInvites = state.invites.filter(i=>i.status==='pending').length;
+  const cntEl = document.getElementById('inviteCnt');
+  cntEl.textContent = pendingInvites;
+  cntEl.style.display = pendingInvites ? 'inline-block' : 'none';
+}
+
+/* ============================================================
+   Invites — ANY team member (not just Duc/Braden — see the "Invited
+   by" roster, which matches the "Answered by" list used elsewhere)
+   can invite a new person into the invite-only investor portal.
+   ------------------------------------------------------------
+   PRODUCTION NOTE: tokens here are client-side placeholders
+   (Math.random-based) purely so this prototype's invite link is
+   clickable end-to-end. A real implementation must generate the
+   token server-side, store it against the invitee's email, make it
+   single-use, expire it, and have index.html validate it via an API
+   call rather than trusting the URL — never trust an invite as valid
+   just because a token-shaped string is present in the query string.
+   ============================================================ */
+function genToken(){
+  return Array.from({length:3}, ()=>Math.random().toString(36).slice(2,8)).join('-');
+}
+function openInvite(){
+  document.getElementById('ivName').value = '';
+  document.getElementById('ivEmail').value = '';
+  document.getElementById('ivRole').value = 'Investor/lender';
+  document.getElementById('ivOtherDesc').value = '';
+  document.getElementById('ivOtherWrap').hidden = true;
+  document.getElementById('ivError').hidden = true;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('inviteOvl').classList.add('show');
+  setTimeout(()=>document.getElementById('ivName').focus(), 50);
+}
+document.addEventListener('change', (e)=>{
+  if(e.target && e.target.id==='ivRole'){
+    document.getElementById('ivOtherWrap').hidden = e.target.value!=='Other';
+  }
+});
+function submitInvite(){
+  const name = document.getElementById('ivName').value.trim();
+  const email = document.getElementById('ivEmail').value.trim();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  let role = document.getElementById('ivRole').value;
+  const by = document.getElementById('ivBy').value;
+  if(role==='Other'){
+    const desc = document.getElementById('ivOtherDesc').value.trim();
+    role = desc ? `Other — ${desc}` : 'Other';
+  }
+  if(!name || !emailOk){
+    document.getElementById('ivError').hidden = false;
+    return;
+  }
+  const id = state.seq++;
+  const token = genToken();
+  const invite = { id, token, name, email, role, by, sent:'Just now', status:'pending' };
+  state.invites.unshift(invite);
+  closeModals();
+  renderInvites(); updateStats();
+  setDdTab('invites');
+  showToast(`✓ ${by} sent an invite to ${name} (${email})`);
+  openInviteEmail(invite);
+}
+function renderInvites(){
+  const el = document.getElementById('invitesPane');
+  const note = `<div class="inv-note">✉ <div><b>Anyone on the team can invite.</b> Sending an invite is not limited to Duc or Braden — any team member listed under "Invited by" can grant a new investor, lawyer, accountant, or other reviewer access to the data room.</div></div>`;
+  if(!state.invites.length){
+    el.innerHTML = note + `<div class="empty">No invites sent yet. Use "Send Invite" above to grant someone invite-only access to the portal.</div>`;
+    return;
+  }
+  el.innerHTML = note + state.invites.map(iv=>`
+    <div class="invite-item win-in">
+      <div class="ii-body">
+        <h4>${iv.name} <span style="color:var(--faint);font-weight:500">· ${iv.email}</span></h4>
+        <p>${iv.role} · invited by <b style="color:var(--text)">${iv.by}</b> · ${iv.sent}</p>
+      </div>
+      <div class="ii-actions">
+        <span class="chip status-${iv.status}">${iv.status==='accepted' ? '✓ Accepted' : '⏳ Pending'}</span>
+        <button class="btn btn-sm" onclick="openInviteEmail(${JSON.stringify(iv).replace(/"/g,'&quot;')})">Preview email</button>
+        <button class="btn btn-sm" onclick="copyInviteLink('${iv.token}')">Copy link</button>
+      </div>
+    </div>`).join('');
+}
+function inviteUrl(iv){
+  return `index.html?invite=${iv.token}&iid=${iv.id}&iname=${encodeURIComponent(iv.name)}&iemail=${encodeURIComponent(iv.email)}&irole=${encodeURIComponent(iv.role)}&iby=${encodeURIComponent(iv.by)}`;
+}
+function copyInviteLink(token){
+  const iv = state.invites.find(i=>i.token===token);
+  if(!iv) return;
+  const url = inviteUrl(iv);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>showToast('✓ Invite link copied to clipboard'));
+  } else {
+    showToast('Invite link: ' + url, 6000);
+  }
+}
+function openInviteEmail(iv){
+  const url = inviteUrl(iv);
+  document.getElementById('emailSubject').textContent = "You're invited to the Plans.aero data room";
+  document.getElementById('emailBody').innerHTML = `
+    <div class="email-meta">
+      <div><b>From:</b> PLANA Due Diligence Bot &lt;dd-bot@plans.aero&gt;</div>
+      <div><b>To:</b> ${iv.name} &lt;${iv.email}&gt;</div>
+      <div><b>Subject:</b> You're invited to the Plans.aero data room</div>
+    </div>
+    <div class="email-light">
+      <div class="el-head"><div class="el-logo">✳ PLANA</div></div>
+      <div class="el-body">
+        <p class="el-eyebrow">DUE DILIGENCE — PLANS.AERO</p>
+        <h3>You've been invited to the data room</h3>
+        <p>Hi ${iv.name}, ${iv.by} has invited you (as ${iv.role}) to Plans.aero's investor data room — chat, search, and browse the full due diligence Q&amp;A library.</p>
+        <a class="el-cta" href="${url}" target="_blank">Accept invite →</a>
+        <p class="el-foot">This link is unique to you and required to sign up — the portal is invite-only. If you weren't expecting this, you can ignore this email.</p>
+      </div>
+    </div>`;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('emailOvl').classList.add('show');
+}
+
+/* ============================================================
+   Notification email preview (admin → investor)
+   ============================================================ */
+function openNotifyEmail(question, answer, cat, by, qid){
+  const investorUrl = `index.html?answered=1&qid=${qid}&q=${encodeURIComponent(question)}&a=${encodeURIComponent(answer)}&cat=${encodeURIComponent(cat)}&by=${encodeURIComponent(by)}`;
+  document.getElementById('emailSubject').textContent = 'Your question has been answered';
+  document.getElementById('emailBody').innerHTML = `
+    <div class="email-meta">
+      <div><b>From:</b> PLANA Due Diligence Bot &lt;dd-bot@plans.aero&gt;</div>
+      <div><b>To:</b> Philippe Investor</div>
+      <div><b>Subject:</b> Your question has been answered</div>
+    </div>
+    <div class="email-light">
+      <div class="el-head"><div class="el-logo">✳ PLANA</div></div>
+      <div class="el-body">
+        <p class="el-eyebrow">DUE DILIGENCE — PLANS.AERO</p>
+        <h3>Your question has been answered</h3>
+        <p>Hi Philippe, the team just posted a verified answer to the question you asked:</p>
+        <div class="el-quote">"${question}"</div>
+        <a class="el-cta" href="${investorUrl}" target="_blank">View my answer →</a>
+        <p class="el-foot">This link takes you straight back to your question in the data room — no need to search for it. You can also find every question you've asked under <b>My Questions</b> in the portal.</p>
+      </div>
+    </div>`;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('emailOvl').classList.add('show');
+}
+
+/* ============================================================
+   Add Q&A modal — add a question+answer directly, no investor
+   escalation needed
+   ============================================================ */
+function openAddQa(){
+  document.getElementById('aqQuestion').value = '';
+  document.getElementById('aqAnswer').value = '';
+  document.getElementById('aqError').hidden = true;
+  const catSel = document.getElementById('aqCategory');
+  catSel.innerHTML = CATS.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('addQaOvl').classList.add('show');
+  setTimeout(()=>document.getElementById('aqQuestion').focus(), 50);
+}
+function submitAddQa(){
+  const q = document.getElementById('aqQuestion').value.trim();
+  const a = document.getElementById('aqAnswer').value.trim();
+  const by = document.getElementById('aqBy').value;
+  if(!q || !a){
+    document.getElementById('aqError').hidden = false;
+    return;
+  }
+  state.library++;
+  state.publishedCount++;
+  closeModals();
+  renderLibrary(); updateStats();
+  setDdTab('library');
+  showToast(`✓ ${by} added a new Q&A directly · now live in the investor portal`);
+}
+
+function closeModals(){
+  document.getElementById('scrim').classList.remove('show');
+  document.getElementById('emailOvl').classList.remove('show');
+  document.getElementById('addQaOvl').classList.remove('show');
+  document.getElementById('inviteOvl').classList.remove('show');
+}
+function showToast(msg, ms){
+  const t = document.createElement('div');
+  t.className='toast';
+  t.innerHTML = `<span class="tdot"></span>${msg}`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), ms||3800);
+}
+
+/* ============================================================
+   Inbound handoff — arriving here from an index.html escalation
+   email link: dd-admin.html?newq=&qid=&cat=&askedBy=
+   ============================================================ */
+function handleIncomingQuestion(){
+  const params = new URLSearchParams(window.location.search);
+  const newq = params.get('newq');
+  if(!newq) return;
+  const qid = Number(params.get('qid')) || state.seq++;
+  const cat = params.get('cat') || 'Data Room';
+  const askedBy = params.get('askedBy') || 'Investor';
+
+  if(!state.pending.find(p=>p.id===qid)){
+    state.pending.unshift({ id: qid, q: newq, cat, askedBy });
+  }
+  renderPending(); updateStats();
+  setDdTab('pending');
+
+  // clean the URL so a refresh doesn't re-add the same question
+  history.replaceState(null, '', window.location.pathname);
+
+  setTimeout(()=>{
+    const card = document.getElementById('pq-'+qid);
+    if(!card) return;
+    card.scrollIntoView({behavior:'smooth', block:'center'});
+    card.classList.add('flash');
+    setTimeout(()=>card.classList.remove('flash'), 3700);
+  }, 80);
+}
+
+init();
+</script>
+</body>
+</html>

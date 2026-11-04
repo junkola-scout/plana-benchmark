@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" style="color-scheme: dark;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plans.aero — Investor Data Room</title>
+<!--
+  ============================================================================
+  INVESTOR PORTAL — plans.aero/invest (password-protected page on the company
+  website). This file is standalone and does NOT require dd-admin.html to
+  run — Chat / Search / Browse FAQ / My Questions all work against the local
+  seed data below.
+
+  It links to dd-admin.html (the PLANA due diligence admin, which lives
+  inside the knowledge-management system on a different host/app) in exactly
+  one place: the "Open in PLANA →" button inside the escalation email
+  preview. That link carries the unanswered question over as URL query
+  params (newq, qid, cat, askedBy) — see the "CROSS-FILE HANDOFF" comment
+  below the SEED_FAQ block for the full contract your backend should
+  eventually replace this with (a real API write + authenticated deep link),
+  rather than raw text in a URL.
+
+  This page also *receives* a handoff back: when PLANA notifies the investor
+  their question has been answered, the email's "View my answer" button
+  points here with ?answered=1&qid=…&q=…&a=…&cat=…&by=… — on load this file
+  reads those params, inserts the new Q&A, and scrolls/highlights it.
+  ============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ Brand tokens (matches PLANA Brain dashboard) ============
+   #e50602 red · #e56203 orange · #414042 gray · #000 · #fff   */
+:root{
+  --brand-red:#e50602;
+  --brand-orange:#e56203;
+  --brand-gray:#414042;
+  --bg:#0f0f10;
+  --surface:#1a1a1c;
+  --raised:#232326;
+  --line:#39383b;
+  --line-strong:#525155;
+  --text:#ffffff;
+  --muted:#a8a7ac;
+  --faint:#7c7b80;
+  --focus:#e56203;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px}
+body{
+  font-family:"Google Sans","Google Sans Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:
+    radial-gradient(2400px 850px at 50% 122%,
+      rgba(229,6,2,.38) 0%, rgba(229,62,3,.18) 30%, rgba(229,98,3,.07) 52%, transparent 72%),
+    #0c0c0d;
+  background-attachment:fixed;
+  color:var(--text);
+  font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button,select,textarea,input{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+[hidden]{display:none !important}
+a{color:inherit}
+
+/* ============ Dev bar (remove before shipping — orientation only) ============ */
+.dev-bar{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:10px;
+  padding:7px 18px;background:#000;border-bottom:1px solid var(--line-strong);flex-wrap:wrap;font-size:12px}
+.dev-bar b{color:var(--brand-orange)}
+.dev-bar a{color:var(--muted);text-decoration:underline;margin-left:auto}
+.dev-bar a:hover{color:var(--text)}
+
+/* ============ Shared components ============ */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);
+  border-radius:7px;padding:0 14px;min-height:34px;font-size:13px;background:var(--surface)}
+.btn:hover{background:var(--raised)}
+.btn-primary{background:linear-gradient(180deg,#fff,#e9e9ec);color:#000;border-color:#fff;font-weight:600}
+.btn-primary:hover{background:#e8e8e8}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;
+  border-radius:6px;padding:3px 9px;min-height:24px;letter-spacing:.02em}
+.chip.outline{border:1px solid var(--line-strong);color:var(--muted);font-weight:600}
+.chip.dashed{border:1px dashed var(--line-strong);color:var(--muted);font-weight:600}
+.chip.approved{background:#fff;color:#000}
+.chip.new{background:linear-gradient(120deg,var(--brand-red),var(--brand-orange) 140%);color:#fff}
+.empty{border:1px dashed var(--line-strong);border-radius:10px;padding:40px;text-align:center;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;width:fit-content}
+.seg button{padding:0 14px;min-height:34px;font-size:13px;color:var(--muted);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:none}
+.seg button:hover{color:var(--text);background:var(--raised)}
+.seg button[aria-pressed="true"]{background:#fff;color:#000;font-weight:700}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:300;
+  background:linear-gradient(180deg,#1e1e21,#141416);border:1px solid var(--brand-orange);
+  border-radius:10px;padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:8px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);animation:toastIn .25s ease both}
+.toast .tdot{width:7px;height:7px;border-radius:50%;background:var(--brand-orange);flex-shrink:0}
+@keyframes winIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.win-in{animation:winIn .3s ease both}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:5px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============ Overlay / modal ============ */
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:186;opacity:0;pointer-events:none;transition:opacity .2s}
+#scrim.show{opacity:1;pointer-events:auto}
+#emailOvl{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,94vw);
+  max-height:84vh;display:none;flex-direction:column;z-index:187;
+  background:linear-gradient(180deg,#1e1e21 0%,var(--surface) 30%,#161618 100%);
+  border:1px solid var(--line-strong);border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.65);overflow:hidden}
+#emailOvl.show{display:flex}
+.mo-head{display:flex;align-items:flex-start;gap:12px;padding:16px 20px 13px;border-bottom:1px solid var(--line)}
+.mo-head h5{font-size:15px;font-weight:700;line-height:1.3;flex:1}
+.mo-close{width:26px;height:26px;border-radius:6px;color:var(--muted);flex-shrink:0}
+.mo-close:hover{background:var(--raised);color:var(--text)}
+.mo-body{overflow-y:auto;padding:16px 20px 20px}
+.email-meta{font-size:12px;color:var(--muted);line-height:1.9;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px}
+.email-meta b{color:var(--text);font-weight:600}
+.email-body{font-size:13.5px;color:var(--text);line-height:1.7}
+.email-body p{margin-bottom:12px}
+.email-cta{display:inline-block;margin-top:6px}
+
+/* light-mode transactional email preview — the investor-facing "answered"
+   notification. Deliberately light (not the dark app theme): renders
+   reliably across every email client and matches inbox expectations. */
+.email-light{background:#f4f4f5;border-radius:10px;overflow:hidden;font-family:"Google Sans","Google Sans Text",-apple-system,sans-serif}
+.el-head{background:#0f0f10;padding:16px 22px}
+.el-logo{color:#fff;font-weight:800;font-size:15px;letter-spacing:.02em}
+.el-body{background:#ffffff;padding:26px 24px 30px;color:#1a1a1c}
+.el-eyebrow{font-size:10.5px;letter-spacing:.1em;color:#e56203;font-weight:800;margin-bottom:8px}
+.el-body h3{font-size:19px;font-weight:800;color:#111;margin-bottom:12px}
+.el-body p{font-size:13.5px;color:#414042;line-height:1.65;margin-bottom:14px}
+.el-quote{border-left:3px solid #e56203;background:#f9f4ef;padding:10px 14px;font-size:13.5px;
+  color:#1a1a1c;font-style:italic;margin-bottom:18px;border-radius:0 6px 6px 0}
+.el-cta{display:inline-block;background:linear-gradient(120deg,#e50602,#e56203 140%);color:#fff;
+  font-weight:700;font-size:13.5px;padding:11px 22px;border-radius:8px;text-decoration:none;margin-bottom:18px}
+.el-foot{font-size:12px;color:#7c7b80;margin-bottom:0}
+
+/* ============ Investor top bar ============ */
+.inv-top{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--line);
+  background:var(--bg);position:sticky;top:33px;z-index:40}
+.inv-top img{height:26px;width:auto}
+.inv-top .sep{width:1px;height:20px;background:var(--line-strong)}
+.inv-top h1{font-size:14.5px;font-weight:700}
+.inv-top .sub{font-size:12px;color:var(--muted)}
+.inv-user{margin-left:auto;display:flex;align-items:center;gap:9px}
+.inv-avatar{width:30px;height:30px;border-radius:50%;background:var(--brand-gray);color:#fff;
+  display:grid;place-items:center;font-size:11.5px;font-weight:700}
+.inv-user b{font-size:12.5px;display:block}
+.inv-user span{font-size:11px;color:var(--muted)}
+.inv-lock{font-size:11px;color:var(--faint);display:flex;align-items:center;gap:5px;margin-left:2px}
+
+/* notification bell */
+.bell-wrap{position:relative}
+.bell-btn{width:34px;height:34px;border-radius:8px;font-size:16px;color:var(--muted);position:relative}
+.bell-btn:hover{background:var(--raised);color:var(--text)}
+.bell-badge{position:absolute;top:2px;right:2px;min-width:15px;height:15px;border-radius:99px;
+  background:linear-gradient(120deg,var(--brand-red),var(--brand-orange) 140%);color:#fff;
+  font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px;
+  border:1.5px solid var(--bg)}
+.bell-badge[hidden]{display:none}
+.bell-dd{position:absolute;top:42px;right:0;width:320px;z-index:60;display:none;
+  background:linear-gradient(180deg,#1e1e21 0%,var(--surface) 30%,#161618 100%);
+  border:1px solid var(--line-strong);border-radius:11px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
+.bell-dd.show{display:block}
+.bell-dd-head{padding:12px 14px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700}
+.bell-dd-list{max-height:280px;overflow-y:auto}
+.bell-dd-item{width:100%;text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);display:block}
+.bell-dd-item:last-child{border-bottom:none}
+.bell-dd-item:hover{background:var(--raised)}
+.bell-dd-item .bq{font-size:12.5px;font-weight:600;line-height:1.4}
+.bell-dd-item .bm{font-size:11px;color:var(--brand-orange);margin-top:3px}
+.bell-dd-empty{padding:22px 14px;text-align:center;color:var(--faint);font-size:12px}
+
+/* My Questions tab */
+.mine-item{border-bottom:1px solid var(--line);padding:14px 2px;display:flex;gap:12px;align-items:flex-start}
+.mine-item:last-child{border-bottom:none}
+.mine-item .mi-body{flex:1}
+.mine-item h4{font-size:13.5px;font-weight:600;line-height:1.4}
+.mine-item .mi-meta{font-size:12px;color:var(--muted);margin-top:5px}
+.chip.status-pending{border:1px solid var(--line-strong);color:var(--muted)}
+.chip.status-answered{background:#1f3a28;color:#7bd88f;border:1px solid #2f5c3c}
+
+/* deep-link highlight on the FAQ item the investor is returned to */
+@keyframes flashHi{0%{box-shadow:0 0 0 0 rgba(229,98,3,.55);background:rgba(229,98,3,.14)}100%{box-shadow:0 0 0 0 rgba(229,98,3,0);background:transparent}}
+.faq-item.flash{animation:flashHi 1.8s ease-out 2}
+.inline-link{color:var(--brand-orange);text-decoration:underline;font:inherit;padding:0}
+
+.inv-wrap{max-width:920px;margin:0 auto;padding:26px 24px 70px}
+.inv-hero{margin-bottom:20px}
+.inv-hero h2{font-size:21px;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
+.inv-hero p{font-size:13.5px;color:var(--muted);max-width:64ch}
+.inv-tabs{margin-bottom:18px}
+
+/* ---- Chat ---- */
+#invChatPane{display:flex;flex-direction:column}
+.chat-window{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#161618,#111112);
+  min-height:360px;max-height:520px;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+.msg{display:flex;gap:10px;max-width:82%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg .bubble-ico{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:12px;font-weight:700}
+.msg.ai .bubble-ico{background:linear-gradient(120deg,var(--brand-red),var(--brand-orange) 140%);color:#fff}
+.msg.user .bubble-ico{background:var(--brand-gray);color:#fff}
+.bubble{border-radius:12px;padding:10px 13px;font-size:13.5px;line-height:1.6}
+.msg.ai .bubble{background:var(--surface);border:1px solid var(--line);border-top-left-radius:3px}
+.msg.user .bubble{background:#fff;color:#000;border-top-right-radius:3px;font-weight:500}
+.bubble .src{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bubble .helpful{margin-top:8px;display:flex;gap:10px;align-items:center;font-size:11.5px;color:var(--faint)}
+.bubble .helpful button{color:var(--faint);font-size:13px}
+.bubble .helpful button:hover{color:var(--text)}
+.typing{display:flex;gap:4px;padding:4px 2px}
+.typing span{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:tbounce 1.1s infinite ease-in-out}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes tbounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+.escalate-note{margin-top:10px;border:1px dashed var(--brand-orange);border-radius:9px;padding:10px 12px;
+  display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--muted)}
+.escalate-note .em-ico{color:var(--brand-orange);font-size:15px}
+.escalate-note b{color:var(--text)}
+
+.chat-input{display:flex;margin-top:12px;gap:0}
+.chat-input input{flex:1;min-height:42px;border:1px solid var(--line-strong);background:var(--surface);
+  color:var(--text);border-radius:9px 0 0 9px;padding:0 14px;font-size:13.5px}
+.chat-input input::placeholder{color:var(--muted)}
+.chat-input button{border-radius:0 9px 9px 0;border:1px solid #fff;background:linear-gradient(180deg,#fff,#e9e9ec);
+  color:#000;font-weight:700;padding:0 20px;min-height:42px;font-size:13px}
+.chat-suggest{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.chat-suggest button{border:1px dashed var(--line-strong);border-radius:99px;padding:6px 13px;font-size:12px;color:var(--muted)}
+.chat-suggest button:hover{border-color:var(--brand-orange);color:var(--brand-orange)}
+
+/* ---- Search ---- */
+.search-box{display:flex;margin-bottom:16px}
+.search-box input{flex:1;min-height:40px;border:1px solid var(--line-strong);background:var(--surface);
+  color:var(--text);border-radius:9px;padding:0 14px;font-size:13.5px}
+.search-box input::placeholder{color:var(--muted)}
+.search-count{font-size:12px;color:var(--muted);margin-bottom:10px}
+
+/* ---- FAQ list ---- */
+.faq-cats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.faq-cat{border:1px solid var(--line-strong);border-radius:99px;padding:6px 13px;font-size:12.5px;color:var(--muted)}
+.faq-cat:hover{color:var(--text);background:var(--raised)}
+.faq-cat[aria-pressed="true"]{background:#fff;color:#000;font-weight:700;border-color:#fff}
+.faq-item{border-bottom:1px solid var(--line);padding:14px 2px}
+.faq-item:last-child{border-bottom:none}
+.faq-q{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left}
+.faq-q .fq-caret{color:var(--faint);font-size:11px;margin-top:4px;transition:transform .15s;flex-shrink:0}
+.faq-item.open .fq-caret{transform:rotate(90deg);color:var(--brand-orange)}
+.faq-q h4{font-size:14px;font-weight:600;flex:1;line-height:1.4}
+.faq-a{display:none;padding:10px 0 0 23px;font-size:13px;color:var(--muted);line-height:1.7;max-width:74ch}
+.faq-item.open .faq-a{display:block}
+.faq-meta{display:flex;gap:7px;align-items:center;margin-top:9px;flex-wrap:wrap}
+.faq-more{text-align:center;padding:18px;color:var(--faint);font-size:12.5px;border-top:1px dashed var(--line);margin-top:6px}
+
+/* ============ Sign-up gate ============ */
+#signupGate{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  background:
+    radial-gradient(2400px 850px at 50% 122%,
+      rgba(229,6,2,.38) 0%, rgba(229,62,3,.18) 30%, rgba(229,98,3,.07) 52%, transparent 72%),
+    #0c0c0d;}
+#signupGate[hidden]{display:none !important}
+.signup-card{width:min(480px,100%);background:linear-gradient(180deg,#1e1e21 0%,var(--surface) 30%,#161618 100%);
+  border:1px solid var(--line-strong);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.65);
+  padding:30px 32px 26px}
+.signup-card img{height:26px;width:auto;margin-bottom:18px}
+.signup-card h2{font-size:19px;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
+.signup-card>p{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.55}
+.su-field{margin-bottom:16px}
+.su-field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:7px}
+.su-field input[type="text"],.su-field input[type="email"]{
+  width:100%;min-height:40px;border:1px solid var(--line-strong);background:var(--bg);
+  color:var(--text);border-radius:8px;padding:0 13px;font-size:13.5px}
+.su-field input::placeholder{color:var(--faint)}
+.su-field input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.su-field input[readonly]{opacity:.7;cursor:not-allowed}
+#inviteLockedView .btn-primary{width:100%;justify-content:center;margin-top:6px}
+.role-list{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.role-item{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid var(--line);cursor:pointer}
+.role-item:last-child{border-bottom:none}
+.role-item:hover{background:var(--raised)}
+.role-item input[type="checkbox"]{width:16px;height:16px;accent-color:var(--brand-orange);flex-shrink:0;cursor:pointer}
+.role-item span{font-size:13.5px}
+.role-item.checked{background:rgba(229,98,3,.08)}
+.su-other-input{margin:0 13px 12px;display:none}
+.su-other-input.show{display:block}
+.su-other-input input{width:100%;min-height:36px;border:1px solid var(--line-strong);background:var(--bg);
+  color:var(--text);border-radius:7px;padding:0 12px;font-size:13px}
+.su-other-input input::placeholder{color:var(--faint)}
+.su-error{font-size:12px;color:var(--brand-orange);margin-top:8px;display:none}
+.su-error.show{display:block}
+.signup-card .btn-primary{width:100%;min-height:42px;justify-content:center;margin-top:22px;font-size:13.5px}
+.signup-card .btn-primary[disabled]{opacity:.45;cursor:not-allowed}
+.su-legal{font-size:11px;color:var(--faint);margin-top:14px;text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- Dev bar — orientation for whoever is testing the prototype. Delete this div when shipping. -->
+<div class="dev-bar">
+  <span>📄 <b>index.html</b> — investor portal (public site)</span>
+  <a href="dd-admin.html" target="_blank">Open dd-admin.html (PLANA) →</a>
+</div>
+
+<!-- ============ SIGN-UP GATE — shown before the investor portal ============ -->
+<div id="signupGate">
+  <div class="signup-card">
+    <img src="data:image/png;base64,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" alt="PLANA">
+
+    <!-- INVITE-LOCKED VIEW — shown when there's no valid ?invite= token in
+         the URL. This is the default: the sign-up form below never renders
+         without an invite. See handleInviteGate() / the SIGN-UP GATE note
+         further down for how the token is checked. -->
+    <div id="inviteLockedView">
+      <h2>This data room is invite-only</h2>
+      <p>Access to the raise Q&amp;A, search, and FAQ library is granted by invitation from the Plans.aero team. If you're expecting access, check your email for an invite link — it'll bring you straight back here signed in.</p>
+      <div class="su-field" style="margin-top:22px">
+        <label for="reqName">Full name</label>
+        <input type="text" id="reqName" placeholder="e.g. Philippe Investor" autocomplete="name">
+      </div>
+      <div class="su-field">
+        <label for="reqEmail">Email address</label>
+        <input type="email" id="reqEmail" placeholder="you@firm.com" autocomplete="email">
+      </div>
+      <button type="button" class="btn btn-primary" onclick="requestAccess()">Request an invite →</button>
+      <div class="su-legal">Requests are reviewed by the deal team, who can each send invites directly.</div>
+    </div>
+
+    <!-- SIGNED-INVITE VIEW — shown only once a valid invite token is
+         present; fields are pre-filled from the invite and the email is
+         locked so the account created matches who was actually invited. -->
+    <div id="signupFormView" hidden>
+      <h2>Welcome to the Investor Data Room</h2>
+      <p id="invitedByLine" style="color:var(--brand-orange);font-weight:600;margin-bottom:14px"></p>
+      <form id="signupForm" onsubmit="return submitSignup(event)">
+        <div class="su-field">
+          <label for="suName">Full name</label>
+          <input type="text" id="suName" name="name" placeholder="e.g. Philippe Investor" autocomplete="name" oninput="validateSignup()">
+        </div>
+        <div class="su-field">
+          <label for="suEmail">Email address</label>
+          <input type="email" id="suEmail" name="email" placeholder="you@firm.com" autocomplete="email" oninput="validateSignup()" readonly>
+        </div>
+        <div class="su-field">
+          <label>Which best describes you? (select one)</label>
+          <div class="role-list" id="roleList">
+            <label class="role-item"><input type="checkbox" class="role-cb" value="Investor/lender" onchange="onRoleChange(this)"><span>Investor/lender</span></label>
+            <label class="role-item"><input type="checkbox" class="role-cb" value="Lawyer" onchange="onRoleChange(this)"><span>Lawyer</span></label>
+            <label class="role-item"><input type="checkbox" class="role-cb" value="Accountant" onchange="onRoleChange(this)"><span>Accountant</span></label>
+            <label class="role-item"><input type="checkbox" class="role-cb" value="Consultant" onchange="onRoleChange(this)"><span>Consultant</span></label>
+            <label class="role-item"><input type="checkbox" class="role-cb" value="Founder/executive" onchange="onRoleChange(this)"><span>Founder/executive</span></label>
+            <label class="role-item"><input type="checkbox" class="role-cb" value="Board member" onchange="onRoleChange(this)"><span>Board member</span></label>
+            <label class="role-item"><input type="checkbox" class="role-cb" value="Other" onchange="onRoleChange(this)"><span>Other (describe)</span></label>
+            <div class="su-other-input" id="suOtherWrap">
+              <input type="text" id="suOtherDesc" placeholder="Please describe…" oninput="validateSignup()">
+            </div>
+          </div>
+          <div class="su-error" id="suError">Please fill in your name, email, and select one role.</div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="suSubmit" disabled>Continue to the data room →</button>
+        <div class="su-legal">By continuing you agree this portal's contents are confidential and subject to your NDA with Plans.aero.</div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="appMain" hidden>
+<div class="inv-top">
+  <img src="data:image/png;base64,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" alt="PLANA">
+  <div class="sep"></div>
+  <div>
+    <h1>Plans.aero — Investor Data Room</h1>
+    <div class="sub">Due diligence Q&amp;A, powered by PLANA</div>
+  </div>
+  <div class="inv-user">
+    <span class="inv-lock">🔒 Password-protected</span>
+    <div class="bell-wrap">
+      <button class="bell-btn" onclick="toggleBell()" id="bellBtn">🔔<span class="bell-badge" id="bellBadge" hidden>0</span></button>
+      <div class="bell-dd" id="bellDd">
+        <div class="bell-dd-head">Answered since your last visit</div>
+        <div class="bell-dd-list" id="bellDdList"></div>
+      </div>
+    </div>
+    <div class="inv-avatar">PH</div>
+    <div>
+      <b>Philippe</b>
+      <span>Fundraising lead</span>
+    </div>
+  </div>
+</div>
+
+<div class="inv-wrap">
+  <div class="inv-hero">
+    <h2>Ask anything about the raise</h2>
+    <p>Chat, search, or browse the full FAQ library below. Every answer is sourced from our verified data room, economic model, and budgets — anything we haven't documented yet gets routed straight to Duc and Braden and posted here as soon as it's answered.</p>
+  </div>
+
+  <div class="seg inv-tabs" role="tablist">
+    <button aria-pressed="true" onclick="setInvTab('chat')" id="invTabChat">💬 Chat</button>
+    <button aria-pressed="false" onclick="setInvTab('search')" id="invTabSearch">🔍 Search</button>
+    <button aria-pressed="false" onclick="setInvTab('faq')" id="invTabFaq">📋 Browse FAQ</button>
+    <button aria-pressed="false" onclick="setInvTab('mine')" id="invTabMine">🕐 My Questions</button>
+  </div>
+
+  <!-- CHAT -->
+  <div id="invChatPane">
+    <div class="chat-window" id="chatWindow"></div>
+    <div class="chat-input">
+      <input id="chatInput" type="text" placeholder="Ask a question about the raise…" onkeydown="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()">Send →</button>
+    </div>
+    <div class="chat-suggest">
+      <button onclick="sendChat('What is your current cash runway?')">What is your current cash runway?</button>
+      <button onclick="sendChat('What is your customer acquisition strategy?')">What is your customer acquisition strategy?</button>
+      <button onclick="sendChat('What is the liquidation preference on this round?')">What is the liquidation preference on this round?</button>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div id="invSearchPane" hidden>
+    <div class="search-box">
+      <input id="searchInput" type="text" placeholder="Search the Q&A library…" oninput="renderSearch()">
+    </div>
+    <div class="search-count" id="searchCount"></div>
+    <div id="searchResults"></div>
+  </div>
+
+  <!-- FAQ -->
+  <div id="invFaqPane" hidden>
+    <div class="faq-cats" id="faqCats"></div>
+    <div id="faqList"></div>
+    <div class="faq-more">97 more answers live in the full library — this prototype shows a representative sample. Placeholder content shown throughout; swap in real Q&amp;A once supplied.</div>
+  </div>
+
+  <!-- MY QUESTIONS -->
+  <div id="invMinePane" hidden>
+    <div id="mineList"></div>
+  </div>
+</div>
+
+<!-- Email preview modal (escalation alert preview + answered notification) -->
+<div id="scrim" onclick="closeModals()"></div>
+<div id="emailOvl">
+  <div class="mo-head">
+    <h5 id="emailSubject">Email preview</h5>
+    <button class="mo-close" onclick="closeModals()">✕</button>
+  </div>
+  <div class="mo-body" id="emailBody"></div>
+</div>
+
+</div><!-- /#appMain -->
+
+<script>
+/* ============================================================
+   SIGN-UP GATE — invite-only access
+   ------------------------------------------------------------
+   This portal is invite-only: the sign-up form only appears when the
+   URL carries a valid invite handoff from dd-admin.html's "Send
+   Invite" action (Invites tab), which ANY team member can trigger —
+   not only Duc or Braden. Without ?invite=... in the URL, visitors
+   see the locked view and can only ask the team to send them one.
+
+   Handoff contract (mirrors the newq/answered handoffs above):
+     dd-admin.html → index.html?invite=<token>&iid=<id>&iname=<name>
+       &iemail=<email>&irole=<role>&iby=<invited-by>
+
+   PRODUCTION NOTE: exactly like the other cross-file handoffs in this
+   prototype, passing invite details through the URL is only for a
+   static click-through demo. Ship this with a real invite token that:
+     1. is generated and stored server-side against the invitee's email
+     2. is single-use and expires
+     3. is validated by an API call on load (GET /api/invites/:token)
+        rather than trusted from the query string
+     4. is marked "accepted" server-side on successful sign-up, which
+        is what should actually flip an invite's status in the
+        dd-admin Invites list (today the two files can't share state).
+   ============================================================ */
+function handleInviteGate(){
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('invite');
+  const lockedView = document.getElementById('inviteLockedView');
+  const formView = document.getElementById('signupFormView');
+
+  if(!token){
+    lockedView.hidden = false;
+    formView.hidden = true;
+    return;
+  }
+
+  // Valid-looking invite present — unlock and pre-fill the real sign-up form.
+  const name = params.get('iname') || '';
+  const email = params.get('iemail') || '';
+  const role = params.get('irole') || '';
+  const by = params.get('iby') || 'the deal team';
+  window.currentInvite = { token, id: params.get('iid'), name, email, role, by };
+
+  document.getElementById('invitedByLine').textContent = `✓ Invited by ${by}`;
+  document.getElementById('suName').value = name;
+  document.getElementById('suEmail').value = email;
+  if(role){
+    const known = ["Investor/lender","Lawyer","Accountant","Consultant","Founder/executive","Board member"];
+    const cb = known.includes(role)
+      ? document.querySelector(`.role-cb[value="${role}"]`)
+      : document.querySelector('.role-cb[value="Other"]');
+    if(cb){
+      cb.checked = true;
+      onRoleChange(cb);
+      if(!known.includes(role)) document.getElementById('suOtherDesc').value = role.replace(/^Other\s*—\s*/,'');
+    }
+  }
+  lockedView.hidden = true;
+  formView.hidden = false;
+  validateSignup();
+}
+function requestAccess(){
+  const name = (document.getElementById('reqName').value||'').trim();
+  const email = (document.getElementById('reqEmail').value||'').trim();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if(!name || !emailOk){
+    showToast('Enter your name and a valid email so the team knows who to invite.');
+    return;
+  }
+  document.getElementById('emailSubject').textContent = 'Access request — Plans.aero data room';
+  document.getElementById('emailBody').innerHTML = `
+    <div class="email-meta">
+      <div><b>From:</b> PLANA Due Diligence Bot &lt;dd-bot@plans.aero&gt;</div>
+      <div><b>To:</b> Deal team (any team member can approve)</div>
+      <div><b>Subject:</b> Access request — Plans.aero data room</div>
+    </div>
+    <div class="email-body">
+      <p>Hi team,</p>
+      <p><b>${name}</b> (${email}) requested access to the investor data room but doesn't have an invite yet.</p>
+      <p>Anyone on the team can grant access from dd-admin.html → Due Diligence → Invites → "Send Invite".</p>
+    </div>`;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('emailOvl').classList.add('show');
+  showToast(`✓ Request sent — the team will follow up at ${email}`);
+}
+
+/* ============================================================
+   Sign-up gate logic
+   ============================================================ */
+function onRoleChange(cb){
+  // enforce single-select even though these are checkbox inputs
+  document.querySelectorAll('.role-cb').forEach(other=>{
+    if(other!==cb) other.checked=false;
+    other.closest('.role-item').classList.toggle('checked', other.checked);
+  });
+  const otherWrap = document.getElementById('suOtherWrap');
+  const isOther = cb.value==='Other' && cb.checked;
+  otherWrap.classList.toggle('show', isOther);
+  if(!isOther) document.getElementById('suOtherDesc').value='';
+  validateSignup();
+}
+function getSelectedRole(){
+  const cb = document.querySelector('.role-cb:checked');
+  return cb ? cb.value : null;
+}
+function validateSignup(){
+  const name = document.getElementById('suName').value.trim();
+  const email = document.getElementById('suEmail').value.trim();
+  const role = getSelectedRole();
+  const otherDesc = document.getElementById('suOtherDesc').value.trim();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  let ok = name.length>0 && emailOk && !!role;
+  if(role==='Other') ok = ok && otherDesc.length>0;
+  document.getElementById('suSubmit').disabled = !ok;
+  return ok;
+}
+function submitSignup(e){
+  e.preventDefault();
+  if(!validateSignup()){
+    document.getElementById('suError').classList.add('show');
+    return false;
+  }
+  document.getElementById('suError').classList.remove('show');
+  const name = document.getElementById('suName').value.trim();
+  const email = document.getElementById('suEmail').value.trim();
+  let role = getSelectedRole();
+  if(role==='Other'){
+    const desc = document.getElementById('suOtherDesc').value.trim();
+    role = `Other — ${desc}`;
+  }
+  window.currentInvestor = { name, email, role };
+
+  // Personalize the top bar with the signed-up investor's name/initials
+  const initials = name.split(/\s+/).filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join('') || 'IN';
+  const avatarEl = document.querySelector('.inv-avatar');
+  const nameEl = document.querySelector('.inv-user b');
+  const roleEl = document.querySelector('.inv-user span');
+  if(avatarEl) avatarEl.textContent = initials;
+  if(nameEl) nameEl.textContent = name;
+  if(roleEl) roleEl.textContent = role;
+
+  document.getElementById('signupGate').setAttribute('hidden','');
+  document.getElementById('appMain').removeAttribute('hidden');
+  return false;
+}
+
+/* ============================================================
+   Investor portal app
+   ============================================================ */
+/* ============================================================
+   Local demo state — seed FAQ (~12 sample items; real library has ~100+)
+   ============================================================ */
+const CATS = ["Data Room","Economic / Business Model","Budgets","Cap Table","Team & Org","Market"];
+
+const SEED_FAQ = [
+  {q:"What is your current cash runway?", a:"As of Q2 2026 we have approximately 14 months of runway at our current burn rate of ~$310K/month, before accounting for this raise. [Placeholder figure]", cat:"Budgets", by:"Braden Miller", updated:"Aug 2026"},
+  {q:"What is your total addressable market (TAM)?", a:"We size TAM at roughly $2.4B globally across flight-planning and dispatch software for commercial and business aviation, with a $410M serviceable obtainable market in our initial North American segment. [Placeholder figure]", cat:"Market", by:"Duc Nguyen", updated:"Jul 2026"},
+  {q:"What is your monthly recurring revenue (MRR)?", a:"Current MRR is approximately $187K, up from $92K a year ago, representing ~103% YoY growth. [Placeholder figure]", cat:"Economic / Business Model", by:"Braden Miller", updated:"Aug 2026"},
+  {q:"What is your customer acquisition cost (CAC) and LTV?", a:"Blended CAC is approximately $1,150 with an LTV:CAC ratio of roughly 4.2:1, driven primarily by organic and referral channels for our core operator segment. [Placeholder figure]", cat:"Economic / Business Model", by:"Duc Nguyen", updated:"Jun 2026"},
+  {q:"Who are the members of the founding team and what is their background?", a:"The founding team includes three principals with prior experience across commercial aviation operations, flight software engineering, and enterprise SaaS go-to-market. Full bios are available in the data room under Team & Org. [Placeholder]", cat:"Team & Org", by:"Duc Nguyen", updated:"May 2026"},
+  {q:"What is included in the data room?", a:"The data room includes cap table, financial statements (last 3 years), customer contracts, IP assignments, insurance policies, and board minutes. Access is granted per-investor after NDA execution.", cat:"Data Room", by:"Braden Miller", updated:"Aug 2026"},
+  {q:"What is the current cap table structure?", a:"Fully diluted, founders hold approximately 58%, prior investors ~27%, and the employee option pool ~15% pre-money. A detailed breakdown is available in the data room. [Placeholder figures]", cat:"Cap Table", by:"Braden Miller", updated:"Jul 2026"},
+  {q:"What are your projected budgets for the next 12 months?", a:"Projected 12-month operating budget is approximately $4.6M, with ~55% allocated to engineering, 25% to go-to-market, and 20% to G&A. [Placeholder figures]", cat:"Budgets", by:"Braden Miller", updated:"Aug 2026"},
+  {q:"What is your gross margin?", a:"Blended gross margin is approximately 74%, consistent with typical SaaS benchmarks for our category. [Placeholder figure]", cat:"Economic / Business Model", by:"Duc Nguyen", updated:"Jun 2026"},
+  {q:"How many paying customers do you currently have?", a:"We currently serve 42 paying operator accounts, ranging from single-aircraft operators to regional fleets. [Placeholder figure]", cat:"Market", by:"Duc Nguyen", updated:"Aug 2026"},
+  {q:"What intellectual property does the company hold?", a:"The company holds two pending patent applications related to flight-plan optimization algorithms, plus registered trademarks for the Plans.aero brand. Full IP assignments are in the data room.", cat:"Data Room", by:"Braden Miller", updated:"Apr 2026"},
+  {q:"What is the use of proceeds for this round?", a:"Proceeds are allocated approximately 50% engineering/product, 30% sales & marketing, 15% operations, and 5% reserve. [Placeholder figures]", cat:"Budgets", by:"Braden Miller", updated:"Aug 2026"},
+];
+
+/* ============================================================
+   CROSS-FILE HANDOFF CONTRACT (read this before wiring up a backend)
+   ------------------------------------------------------------
+   OUTBOUND (this file → dd-admin.html):
+     When a question can't be matched locally, "View the alert email"
+     shows a real link to:  dd-admin.html?newq=<question>&qid=<id>&cat=<category>&askedBy=<name>
+     dd-admin.html reads those params on load and creates a pending card.
+
+   INBOUND (dd-admin.html → this file):
+     When PLANA publishes an answer, the notification email's CTA points to:
+       index.html?answered=1&qid=<id>&q=<question>&a=<answer>&cat=<category>&by=<answerer>
+     This file reads those params on load, inserts the Q&A, and opens it.
+
+   PRODUCTION NOTE FOR YOUR DEVELOPER:
+     Passing question/answer text through the URL is fine for a static
+     click-through prototype but is not how this should ship. Replace with:
+       1. SEED_FAQ → GET /api/dd-answers (your real Q&A store)
+       2. escalate → POST /api/dd-questions {question, askedBy} → triggers
+          the internal email to Duc/Braden with a deep link containing a
+          real question ID (not raw text)
+       3. publish (dd-admin.html) → POST /api/dd-answers/:id → triggers the
+          investor notification email via your ESP, and the deep link back
+          here should carry only the ID; this page fetches the answer by ID
+          rather than trusting values from the URL.
+     Both pages already isolate all data access behind small functions
+     (loadFaq/escalate/etc. — see below) so swapping fetch() calls in is a
+     contained change.
+   ============================================================ */
+
+function seedFaqWithIds(){
+  return JSON.parse(JSON.stringify(SEED_FAQ)).map((item,idx)=>({ ...item, id:`seed-${idx+1}` }));
+}
+
+let state = {
+  faq: seedFaqWithIds(),
+  pending: [],
+  myQuestions: [],   // questions this investor personally asked: {id, q, status:'pending'|'answered', faqId}
+  unread: [],        // faqIds answered but not yet opened by the investor — drives the notification bell
+  seq: 1000
+};
+
+function init(){
+  document.getElementById('chatWindow').innerHTML='';
+  addAiBubble("Hi Philippe — ask me anything about the raise. I search the data room, economic model, and budgets before answering, and I always cite the source.", null);
+  renderFaq(); renderSearch(); renderMyQuestions(); renderBell();
+  handleIncomingAnswer();
+}
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+function setInvTab(t){
+  document.getElementById('invChatPane').hidden = t!=='chat';
+  document.getElementById('invSearchPane').hidden = t!=='search';
+  document.getElementById('invFaqPane').hidden = t!=='faq';
+  document.getElementById('invMinePane').hidden = t!=='mine';
+  ['Chat','Search','Faq','Mine'].forEach(k=>document.getElementById('invTab'+k).setAttribute('aria-pressed', k.toLowerCase()===t));
+  if(t==='search') renderSearch();
+  if(t==='faq') renderFaq();
+  if(t==='mine') renderMyQuestions();
+}
+
+/* ============================================================
+   Chat + local matching engine (simple keyword match against FAQ)
+   ============================================================ */
+function addAiBubble(html, srcItem){
+  const w = document.getElementById('chatWindow');
+  const row = document.createElement('div');
+  row.className = 'msg ai win-in';
+  row.innerHTML = `<div class="bubble-ico">✦</div><div class="bubble">${html}${srcItem?`
+    <div class="src"><span class="chip approved">✓ Verified</span><span class="chip outline">${srcItem.cat}</span><span class="chip dashed">By ${srcItem.by} · ${srcItem.updated}</span></div>
+    <div class="helpful"><span>Was this helpful?</span><button>👍</button><button>👎</button></div>`:''}</div>`;
+  w.appendChild(row);
+  w.scrollTop = w.scrollHeight;
+}
+function addUserBubble(text){
+  const w = document.getElementById('chatWindow');
+  const row = document.createElement('div');
+  row.className = 'msg user win-in';
+  row.innerHTML = `<div class="bubble-ico">PH</div><div class="bubble"></div>`;
+  row.querySelector('.bubble').textContent = text;
+  w.appendChild(row);
+  w.scrollTop = w.scrollHeight;
+}
+const STOPWORDS = new Set(["what","your","have","this","that","about","does","with","from","were","will","they","them","their","would","could","should","there","which","when","where","been","being","some","also","into","than","then","just","much","many","most","only","over","such","very","during","current","currently"]);
+function matchFaq(text){
+  const words = text.toLowerCase().replace(/[^\w\s]/g,'').split(/\s+/).filter(w=>w.length>3 && !STOPWORDS.has(w));
+  if(!words.length) return null;
+  let best=null, bestScore=0;
+  state.faq.forEach(item=>{
+    const hayQ = item.q.toLowerCase();
+    const hayA = item.a.toLowerCase();
+    let score = 0;
+    words.forEach(w=>{ if(hayQ.includes(w)) score+=2; else if(hayA.includes(w)) score+=1; });
+    if(score>bestScore){ bestScore=score; best=item; }
+  });
+  return bestScore>=3 ? best : null;
+}
+function sendChat(preset){
+  const input = document.getElementById('chatInput');
+  const text = (preset!==undefined ? preset : input.value).trim();
+  if(!text) return;
+  addUserBubble(text);
+  input.value='';
+  const w = document.getElementById('chatWindow');
+  const typing = document.createElement('div');
+  typing.className='msg ai';
+  typing.innerHTML = `<div class="bubble-ico">✦</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  w.appendChild(typing); w.scrollTop = w.scrollHeight;
+
+  setTimeout(()=>{
+    typing.remove();
+    const match = matchFaq(text);
+    if(match){
+      addAiBubble(match.a, match);
+    } else {
+      const qid = state.seq++;
+      const cat = guessCat(text);
+      addAiBubble(`I don't have a verified answer for that yet.
+        <div class="escalate-note"><span class="em-ico">✉</span><div><b>Duc Nguyen and Braden Miller have been notified</b> — I've emailed them your question with a direct link into PLANA. I'll also email <b>you</b> the moment it's answered, and you'll find it waiting in <button class="inline-link" onclick="setInvTab('mine')">My Questions</button> (average response time ~4 hours). <a href="#" onclick="openEscalationEmail('${escapeAttr(text)}', ${qid}, '${escapeAttr(cat)}');return false;" style="color:var(--brand-orange);text-decoration:underline">View the alert email they received →</a></div></div>`, null);
+      state.pending.push({ id: qid, q:text, cat });
+      state.myQuestions.push({ id: qid, q:text, status:'pending', faqId:null });
+      renderMyQuestions();
+    }
+  }, 900 + Math.random()*500);
+}
+function guessCat(text){
+  const t = text.toLowerCase();
+  if(/cash|budget|spend|burn|runway/.test(t)) return 'Budgets';
+  if(/cap table|equity|shares|option pool/.test(t)) return 'Cap Table';
+  if(/team|founder|hire|org/.test(t)) return 'Team & Org';
+  if(/market|tam|customer|competitor/.test(t)) return 'Market';
+  if(/margin|revenue|mrr|arr|cac|ltv|pricing/.test(t)) return 'Economic / Business Model';
+  return 'Data Room';
+}
+function escapeAttr(s){ return String(s).replace(/'/g,"\\'"); }
+
+/* ============================================================
+   Search pane
+   ============================================================ */
+function renderSearch(){
+  const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const results = q ? state.faq.filter(i=> (i.q+' '+i.a).toLowerCase().includes(q)) : state.faq;
+  document.getElementById('searchCount').textContent = q ? `${results.length} result${results.length!==1?'s':''} for "${q}"` : `${results.length} answers in the library`;
+  const el = document.getElementById('searchResults');
+  el.innerHTML = results.map(i=>`
+    <div class="faq-item">
+      <div class="faq-q"><span class="fq-caret">▸</span><h4>${i.q}</h4></div>
+      <div class="faq-a" style="display:block;padding-left:23px">${i.a}
+        <div class="faq-meta"><span class="chip outline">${i.cat}</span><span class="chip dashed">By ${i.by} · ${i.updated}</span></div>
+      </div>
+    </div>`).join('') || `<div class="empty">No matches — try asking in the Chat tab and we'll get you a verified answer.</div>`;
+}
+
+/* ============================================================
+   FAQ browse pane
+   ============================================================ */
+let activeCat = 'All';
+function renderFaq(){
+  const catsEl = document.getElementById('faqCats');
+  const cats = ['All', ...CATS];
+  catsEl.innerHTML = cats.map(c=>`<button class="faq-cat" aria-pressed="${c===activeCat}" onclick="setFaqCat('${c}')">${c}</button>`).join('');
+  const list = activeCat==='All' ? state.faq : state.faq.filter(i=>i.cat===activeCat);
+  const el = document.getElementById('faqList');
+  el.innerHTML = list.map(i=>`
+    <div class="faq-item" id="faqitem-${i.id}">
+      <button class="faq-q" onclick="toggleFaq('${i.id}')"><span class="fq-caret">▸</span><h4>${i.q} ${i.isNew?'<span class=\"chip new\">NEW</span>':''}</h4></button>
+      <div class="faq-a">${i.a}
+        <div class="faq-meta"><span class="chip outline">${i.cat}</span><span class="chip dashed">By ${i.by} · ${i.updated}</span></div>
+      </div>
+    </div>`).join('');
+}
+function setFaqCat(c){ activeCat=c; renderFaq(); }
+function toggleFaq(id){ document.getElementById('faqitem-'+id).classList.toggle('open'); }
+
+/* ============================================================
+   Notification bell + My Questions
+   ============================================================ */
+function toggleBell(){ document.getElementById('bellDd').classList.toggle('show'); }
+function renderBell(){
+  const badge = document.getElementById('bellBadge');
+  const n = state.unread.length;
+  badge.hidden = n===0;
+  badge.textContent = n;
+  const list = document.getElementById('bellDdList');
+  if(!n){
+    list.innerHTML = `<div class="bell-dd-empty">Nothing new — you're all caught up.</div>`;
+    return;
+  }
+  list.innerHTML = state.unread.map(faqId=>{
+    const item = state.faq.find(f=>f.id===faqId);
+    if(!item) return '';
+    return `<button class="bell-dd-item" onclick="openAnswer('${faqId}')"><div class="bq">${item.q}</div><div class="bm">✓ Answered · view now →</div></button>`;
+  }).join('');
+}
+function renderMyQuestions(){
+  const el = document.getElementById('mineList');
+  if(!state.myQuestions.length){
+    el.innerHTML = `<div class="empty">You haven't asked anything yet that wasn't already in the library. Ask something new in Chat to see it tracked here.</div>`;
+    return;
+  }
+  el.innerHTML = state.myQuestions.slice().reverse().map(m=>`
+    <div class="mine-item">
+      <div class="mi-body">
+        <h4>${m.q}</h4>
+        <div class="mi-meta">${m.status==='answered' ? '✓ Answered — ready to view' : '⏳ Sent to Duc & Braden · avg response time ~4 hours'}</div>
+      </div>
+      ${m.status==='answered'
+        ? `<span class="chip status-answered">Answered</span><button class="btn" onclick="openAnswer('${m.faqId}')">View answer →</button>`
+        : `<span class="chip status-pending">Pending</span>`}
+    </div>`).join('');
+}
+function openAnswer(faqId){
+  closeModals();
+  setInvTab('faq');
+  activeCat = 'All';
+  renderFaq();
+  state.unread = state.unread.filter(id=>id!==faqId);
+  renderBell();
+  document.getElementById('bellDd').classList.remove('show');
+  setTimeout(()=>{
+    const el = document.getElementById('faqitem-'+faqId);
+    if(!el) return;
+    el.classList.add('open');
+    el.scrollIntoView({behavior:'smooth', block:'center'});
+    el.classList.add('flash');
+    setTimeout(()=>el.classList.remove('flash'), 3700);
+  }, 60);
+}
+document.addEventListener('click', (e)=>{
+  const wrap = document.querySelector('.bell-wrap');
+  if(wrap && !wrap.contains(e.target)) document.getElementById('bellDd')?.classList.remove('show');
+});
+
+/* ============================================================
+   Email preview modals
+   ============================================================ */
+function openEscalationEmail(question, qid, cat){
+  const adminUrl = `dd-admin.html?newq=${encodeURIComponent(question)}&qid=${qid}&cat=${encodeURIComponent(cat)}&askedBy=${encodeURIComponent('Philippe Investor')}`;
+  document.getElementById('emailSubject').textContent = 'New DD question needs an answer';
+  document.getElementById('emailBody').innerHTML = `
+    <div class="email-meta">
+      <div><b>From:</b> PLANA Due Diligence Bot &lt;dd-bot@plans.aero&gt;</div>
+      <div><b>To:</b> Duc Nguyen, Braden Miller</div>
+      <div><b>Subject:</b> New DD question needs an answer — Philippe Investor</div>
+    </div>
+    <div class="email-body">
+      <p>Hi Duc &amp; Braden,</p>
+      <p>An investor asked a question our data room, economic model, and budgets don't currently answer:</p>
+      <p style="border-left:2px solid var(--brand-orange);padding-left:12px;color:var(--muted)">"${question}"</p>
+      <p>Please add a verified answer so it's ready next time it's asked — and so Philippe gets notified automatically.</p>
+      <a class="btn btn-primary email-cta" href="${adminUrl}" target="_blank">Open in PLANA →</a>
+    </div>`;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('emailOvl').classList.add('show');
+}
+function closeModals(){
+  document.getElementById('scrim').classList.remove('show');
+  document.getElementById('emailOvl').classList.remove('show');
+}
+function showToast(msg, ms){
+  const t = document.createElement('div');
+  t.className='toast';
+  t.innerHTML = `<span class="tdot"></span>${msg}`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), ms||3800);
+}
+
+/* ============================================================
+   Inbound handoff — arriving here from a dd-admin.html notification
+   email link: index.html?answered=1&qid=&q=&a=&cat=&by=
+   ============================================================ */
+function handleIncomingAnswer(){
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('answered') !== '1') return;
+  const qid = params.get('qid');
+  const q = params.get('q');
+  const a = params.get('a');
+  const cat = params.get('cat') || 'Data Room';
+  const by = params.get('by') || 'Braden Miller';
+  if(!q || !a) return;
+
+  const faqId = `f-${qid || state.seq++}`;
+  if(!state.faq.find(f=>f.id===faqId)){
+    state.faq.unshift({ id:faqId, q, a, cat, by, updated:'Just now', isNew:true });
+  }
+  let mine = state.myQuestions.find(m=>String(m.id)===String(qid));
+  if(!mine){ mine = { id:qid, q, status:'answered', faqId }; state.myQuestions.push(mine); }
+  else { mine.status='answered'; mine.faqId=faqId; }
+  state.unread.push(faqId);
+  renderMyQuestions(); renderBell();
+
+  // clean the URL so a refresh doesn't re-trigger this
+  history.replaceState(null, '', window.location.pathname);
+
+  showToast(`✓ Your question was answered — opening it now…`);
+  setTimeout(()=>openAnswer(faqId), 700);
+}
+
+handleInviteGate();
+init();
+</script>
+</body>
+</html>
