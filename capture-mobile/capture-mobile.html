@@ -232,6 +232,42 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .pegopt button b{display:block;color:var(--text);font-size:var(--fs-sm)}
 .pegopt button[aria-pressed="true"]{border-color:var(--brand-orange);background:rgba(244,82,9,.08)}
 
+/* ----- pick session ----- */
+.search{margin:4px 20px 10px;display:flex;align-items:center;gap:8px;background:var(--raised);border:1px solid var(--line-strong);border-radius:var(--r-xl);padding:0 12px;min-height:40px;color:var(--muted);font-size:var(--fs-base)}
+.pickrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 0;border-bottom:1px solid var(--line)}
+.pickrow:last-child{border-bottom:none}
+.pickrow .ico{width:40px;height:40px;border-radius:var(--r-lg);background:var(--raised);display:grid;place-items:center;color:var(--text);flex-shrink:0}
+.pickrow .ico svg{width:19px;height:19px}
+.pickrow .ico.live{background:var(--grad-brand);color:var(--bg)}
+.pickrow .n{flex:1;min-width:0}
+.pickrow .n b{display:block;font-size:var(--fs-md);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pickrow .n span{font-size:var(--fs-xs);color:var(--muted)}
+.pickrow .tag{font-size:var(--fs-micro);font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.pickrow .tag.hot{color:var(--brand-orange)}
+.pickrow .tag.ok{color:var(--success)}
+.sess .m .act{margin-left:auto}
+.pill.btnish{border-color:var(--brand-orange);color:var(--brand-orange);cursor:pointer;padding:3px 10px}
+.pegline.before{border-color:rgba(46,107,143,.7);background:rgba(46,107,143,.1)}
+.pegline.after{border-color:rgba(127,217,160,.5);background:rgba(23,52,42,.5)}
+.pegline .pk{margin-left:auto;display:inline-flex;align-items:center;gap:4px;color:var(--text);font-weight:700;white-space:nowrap}
+.pegline .pk .caret{color:var(--brand-orange)}
+
+/* ----- place on timeline ----- */
+.mom{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:10px 0;border-bottom:1px solid var(--line)}
+.mom:last-child{border-bottom:none}
+.mom .rd{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-strong);flex-shrink:0;margin-top:2px;display:grid;place-items:center}
+.mom[aria-pressed="true"] .rd{border-color:var(--brand-orange)}
+.mom[aria-pressed="true"] .rd::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--brand-orange)}
+.mom .n{flex:1;min-width:0}
+.mom .n .ts{font-family:var(--font-mono);font-size:var(--fs-micro);color:var(--brand-amber);font-weight:600}
+.mom .n b{display:block;font-size:var(--fs-base);margin-top:1px}
+.mom .n p{font-size:var(--fs-xs);color:var(--muted);line-height:1.45;margin-top:2px}
+.mom .n .avs{margin-top:6px}
+.mom .n .avs .avatar{width:16px;height:16px;font-size:7px}
+.mom.post{background:rgba(127,217,160,.06);border:1px dashed #2A5A42;border-radius:var(--r-xl);padding:10px 12px;margin-top:10px}
+.preview{display:flex;gap:8px;padding:0 20px 10px}
+.preview .thumb{width:56px;height:56px}
+
 /* ----- join ----- */
 .qr{width:208px;height:208px;margin:14px auto 0;background:var(--text);border-radius:var(--r-2xl);padding:14px;display:grid;grid-template-columns:repeat(21,1fr);gap:1px}
 .qr i{display:block;background:var(--bg);border-radius:1px}
@@ -357,6 +393,11 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
   <button class="side-item" data-go="join"><span class="num">06</span>Invite other devices</button>
   <button class="side-item" data-go="wrap"><span class="num">07</span>Wrap-up &amp; send</button>
   <button class="side-item" data-go="detail"><span class="num">08</span>Asset in context</button>
+  <div class="side-label" style="margin-top:6px">Before &amp; after</div>
+  <button class="side-item" data-go="pick"><span class="num">09</span>Pick a session</button>
+  <button class="side-item" data-go="attach-before"><span class="num">10</span>Attach — pre-read</button>
+  <button class="side-item" data-go="attach-after"><span class="num">11</span>Attach — after</button>
+  <button class="side-item" data-go="place"><span class="num">12</span>Place on timeline</button>
   <div class="note"><span>💡</span><span>Every screen is live — tap through on the phone. The <b>secret sauce</b> is screens 04–08: anything captured by anyone in the room is pegged to the session clock, so the transcript, the photo, and the file all point at the same moment.</span></div>
   <div class="note mt-2" style="border-color:rgba(244,82,9,.4)"><span>📱</span><span>Open on a real phone (≤430px) and the frame drops away.</span></div>
 </aside>
@@ -392,7 +433,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <div class="grow">
           <div class="t">Investor update — Northwind Ventures</div>
           <div class="s">Zoom · 45 min · Duc, Vu, Scout</div>
-          <div class="m"><span class="pill cal"><svg class="i"><use href="#i-cal"/></svg>Matched</span><span class="pill">Engagement · Series A</span></div>
+          <div class="m"><span class="pill cal"><svg class="i"><use href="#i-cal"/></svg>Matched</span><span class="pill">1 pre-read</span><button class="pill btnish act" data-go="attach-before">+ Prep</button></div>
         </div>
       </div>
 
@@ -402,7 +443,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <div class="grow">
           <div class="t">Site walk — Hangar 4 layout</div>
           <div class="s">1h 12m · 4 devices · 23 assets</div>
-          <div class="m"><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>In Hyperspace</span><span class="pill">4 decisions</span><span class="pill">11 action items</span></div>
+          <div class="m"><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>In Hyperspace</span><span class="pill">4 decisions</span><button class="pill btnish act" data-go="attach-after">+ Add</button></div>
         </div>
       </div>
       <div class="sess">
@@ -435,7 +476,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
     <nav class="tabbar">
       <button aria-current="page"><svg class="i"><use href="#i-home"/></svg>Sessions</button>
       <button data-go="join"><svg class="i"><use href="#i-qr"/></svg>Join</button>
-      <button data-go="attach"><svg class="i"><use href="#i-up"/></svg>Upload</button>
+      <button data-go="pick"><svg class="i"><use href="#i-up"/></svg>Upload</button>
       <button><svg class="i"><use href="#i-brain"/></svg>Hyperspace</button>
     </nav>
   </section>
@@ -534,10 +575,10 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
   <!-- ===== 05 ATTACH ===== -->
   <section class="screen" data-screen="attach" style="padding-top:0;background:rgba(0,0,0,.35)">
     <div class="sheet">
-      <div class="abar" style="padding-top:22px"><button class="back" data-go="live"><svg class="i"><use href="#i-back"/></svg></button><h2>Add to session</h2><span class="hero-tag">S-0147</span></div>
-      <div class="pegline"><svg class="i" style="color:var(--brand-orange)"><use href="#i-link"/></svg><span><b>Rivera Composites</b> · supplier review</span><span class="ts">now 14:32</span></div>
+      <div class="abar" style="padding-top:22px"><button class="back" id="attach-back" data-go="live"><svg class="i"><use href="#i-back"/></svg></button><h2 id="attach-h">Add to session</h2><span class="hero-tag" id="attach-serial">S-0147</span></div>
+      <button class="pegline" id="pegline" data-go="pick"><svg class="i" style="color:var(--brand-orange)"><use href="#i-link"/></svg><span id="peg-txt"><b>Rivera Composites</b> · supplier review</span><span class="pk"><span id="peg-ts" class="ts">now 14:32</span><span class="caret">▾</span></span></button>
       <div class="segs"><button aria-pressed="true">Photos &amp; video</button><button aria-pressed="false">Files</button><button aria-pressed="false">Link</button></div>
-      <div class="scroll" style="padding:0 0 12px">
+      <div class="scroll" style="padding:0 0 48px">
         <div class="grid">
           <div class="cell-img a on"><span class="sel">1</span><span class="when">1:14 pm</span></div>
           <div class="cell-img b vid on"><span class="sel">2</span></div>
@@ -552,14 +593,55 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <div class="sec" style="padding:0 20px">Files on this phone<span class="rule"></span></div>
         <div class="filerow on"><span class="fi">PDF</span><div class="n"><b>Rivera_Quote_v3_2026-11-02.pdf</b><span>Mail · 2.1 MB · yesterday</span></div><span class="sel"></span></div>
         <div class="filerow"><span class="fi">XLS</span><div class="n"><b>cure-cycle-comparison.xlsx</b><span>Files · 84 KB · Oct 30</span></div><span class="sel"></span></div>
-        <div class="pegopt">
-          <button aria-pressed="true"><b>Pin at now · 14:32</b>Appears in the transcript where you are right now.</button>
-          <button aria-pressed="false"><b>Pin at capture time</b>Uses each photo's own timestamp (1:14 pm → 14:02).</button>
-        </div>
+        <div class="pegopt" id="pegopt"></div>
       </div>
       <div class="foot">
-        <button class="cta" data-go="live"><svg class="i"><use href="#i-up"/></svg>Pin 4 items to this session</button>
+        <button class="cta" id="attach-cta" data-go="live"><svg class="i"><use href="#i-up"/></svg>Pin 4 items to this session</button>
       </div>
+    </div>
+  </section>
+
+  <!-- ===== 09 PICK SESSION ===== -->
+  <section class="screen" data-screen="pick">
+    <div class="abar"><button class="back" data-go="sessions"><svg class="i"><use href="#i-back"/></svg></button><h2>Add to which session?</h2></div>
+    <div class="search"><svg class="i"><use href="#i-doc"/></svg>Search sessions, engagements, people…</div>
+    <div class="scroll" style="padding-top:0">
+      <div class="note in" style="margin-bottom:6px"><span>🧷</span><span>Assets don't need a live recording. Pin them to a meeting that hasn't happened yet (<b>pre-read</b>) or one that's already in Hyperspace (<b>post-meeting</b>) and they file under the same record.</span></div>
+      <div class="sec">Live now<span class="rule"></span></div>
+      <button class="pickrow" data-go="attach"><span class="ico live"><svg class="i"><use href="#i-mic"/></svg></span><div class="n"><b>Supplier review — Rivera Composites</b><span>S-0147 · recording · 14:32</span></div><span class="tag hot">Live</span></button>
+      <div class="sec">Up next · calendar<span class="rule"></span></div>
+      <button class="pickrow" data-go="attach-before"><span class="ico"><svg class="i"><use href="#i-cal"/></svg></span><div class="n"><b>Investor update — Northwind Ventures</b><span>Today 2:00 pm · Series A · 1 pre-read</span></div><span class="tag">Pre-read</span></button>
+      <button class="pickrow" data-go="attach-before"><span class="ico"><svg class="i"><use href="#i-cal"/></svg></span><div class="n"><b>Tooling PO scope — Rivera</b><span>Fri 10:00 am · Supplier qualification</span></div><span class="tag">Pre-read</span></button>
+      <button class="pickrow" data-go="attach-before"><span class="ico"><svg class="i"><use href="#i-cal"/></svg></span><div class="n"><b>Board prep — Q4 numbers</b><span>Mon Nov 9 · 9:00 am</span></div><span class="tag">Pre-read</span></button>
+      <div class="sec">Recent<span class="rule"></span></div>
+      <button class="pickrow" data-go="attach-after"><span class="ico"><svg class="i"><use href="#i-check"/></svg></span><div class="n"><b>Site walk — Hangar 4 layout</b><span>Tue Nov 3 · 23 assets · in Hyperspace</span></div><span class="tag ok">Add after</span></button>
+      <button class="pickrow" data-go="attach-after"><span class="ico"><svg class="i"><use href="#i-check"/></svg></span><div class="n"><b>Weekly sync — Platform team</b><span>Mon Nov 2 · 2 assets</span></div><span class="tag ok">Add after</span></button>
+      <button class="pickrow" data-go="attach-after"><span class="ico"><svg class="i"><use href="#i-check"/></svg></span><div class="n"><b>Coffee w/ Peter — intros</b><span>Fri Oct 30 · 2 uploads pending</span></div><span class="tag ok">Add after</span></button>
+      <div class="sec">No meeting?<span class="rule"></span></div>
+      <button class="pickrow"><span class="ico"><svg class="i"><use href="#i-brain"/></svg></span><div class="n"><b>Just send it to Hyperspace</b><span>Files under an engagement, no session. Hyperspace can suggest one later.</span></div><span class="tag">Loose</span></button>
+      <button class="pickrow"><span class="ico"><svg class="i"><use href="#i-note"/></svg></span><div class="n"><b>Start a notes-only session now</b><span>Timestamped container, no recording</span></div><span class="tag">New</span></button>
+    </div>
+  </section>
+
+  <!-- ===== 12 PLACE ON TIMELINE ===== -->
+  <section class="screen" data-screen="place">
+    <div class="abar"><button class="back" data-go="attach-after"><svg class="i"><use href="#i-back"/></svg></button><h2>Where does this belong?</h2><span class="hero-tag">S-0141</span></div>
+    <div class="preview">
+      <div class="thumb img c"><span class="ts">photo</span></div>
+      <div class="thumb doc"><svg class="i"><use href="#i-doc"/></svg>PDF</div>
+      <div class="grow" style="font-size:var(--fs-xs);color:var(--muted);line-height:1.45;padding-top:4px"><b style="color:var(--text)">2 items → Site walk — Hangar 4</b><br>Snap them to the moment they were about, so they get the transcript context.</div>
+    </div>
+    <div class="scroll" style="padding-top:0">
+      <div class="sec" style="margin-top:4px">Moments Hyperspace found<span class="rule"></span></div>
+      <button class="mom" aria-pressed="false"><span class="rd"></span><div class="n"><span class="ts">04:10</span><b>Mezzanine load question</b><p>Duc asks whether the mezzanine can carry the test rig. "Need the data plate."</p></div></button>
+      <button class="mom" aria-pressed="true"><span class="rd"></span><div class="n"><span class="ts">18:42</span><b>Bay 2 fixture photos — "send me the drawing"</b><p>Scout: I'll pull the fixture drawing from the vendor tonight. ✦ Matches your PDF's title.</p><span class="avs"><span class="avatar me">SU</span><span class="avatar c">DT</span></span></div></button>
+      <button class="mom" aria-pressed="false"><span class="rd"></span><div class="n"><span class="ts">33:15</span><b>Decision — move the tool crib to the east wall</b><p>Maya flags the forklift lane; everyone agrees to re-measure.</p></div></button>
+      <button class="mom" aria-pressed="false"><span class="rd"></span><div class="n"><span class="ts">51:08</span><b>Wrap — action items</b><p>Scout: fixture drawing (tonight). Duc: load calc. Maya: re-measure lane.</p></div></button>
+      <button class="mom post" aria-pressed="false"><span class="rd"></span><div class="n"><span class="ts" style="color:#7FD9A0">AFTER</span><b>Post-meeting, not on the timeline</b><p>Attached to the record as follow-up material. Still searchable, just not tied to a moment.</p></div></button>
+      <div class="note mt-2"><span>✦</span><span>Hyperspace already matched your PDF to <b>18:42</b> by title and speaker. You can override it.</span></div>
+    </div>
+    <div class="foot">
+      <button class="cta" data-go="sessions"><svg class="i"><use href="#i-link"/></svg>Pin 2 items at 18:42</button>
     </div>
   </section>
 
@@ -649,7 +731,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 
 </div>
 </main>
-<div class="stage-cap">Junkola Hyperspace · Capture (mobile) · clickable prototype · press 1–8 to jump</div>
+<div class="stage-cap">Junkola Hyperspace · Capture (mobile) · clickable prototype · press 1–9, 0, -, = to jump</div>
 
 <script>
 /* ---------------------------------------------------------------- seed data
@@ -668,12 +750,40 @@ const SESSION = {
     {id:'A-0147-06',kind:'note', ts:'02:10',by:'MK',title:'Consent confirmed'}
   ]
 };
-const SCREENS=['sessions','start','live','camera','attach','join','wrap','detail'];
+const SCREENS=['sessions','start','live','camera','attach','join','wrap','detail','pick','attach-before','attach-after','place'];
+const KEYS=['1','2','3','4','5','6','7','8','9','0','-','='];
+
+/* attach-sheet modes: the same sheet, pegged to a live, future, or past session */
+const ATTACH_MODES={
+  live:{h:'Add to session',serial:'S-0147',back:'live',cls:'',
+    txt:'<b>Rivera Composites</b> · supplier review',ts:'now 14:32',cta:'Pin 4 items to this session',next:'live',
+    opts:[['Pin at now · 14:32','Appears in the transcript where you are right now.',true],['Pin at capture time','Uses each photo\'s own timestamp (1:14 pm → 14:02).',false]]},
+  before:{h:'Prep for a meeting',serial:'S-0149',back:'pick',cls:'before',
+    txt:'<b>Northwind Ventures</b> · investor update',ts:'today 2:00 pm',cta:'Add 4 items as pre-read',next:'sessions',
+    opts:[['Pre-read · before 00:00','Filed ahead of the meeting. Hyperspace briefs attendees and has it ready when recording starts.',true],['Agenda item','Also drops a line into the session agenda so it comes up on the clock.',false]]},
+  after:{h:'Add to a past meeting',serial:'S-0141',back:'pick',cls:'after',
+    txt:'<b>Site walk — Hangar 4</b> · Tue Nov 3',ts:'in Hyperspace',cta:'Next · place on timeline',next:'place',
+    opts:[['Place on the timeline','Snap to the moment it was about — keeps the "what was being said" context.',true],['Post-meeting follow-up','Attached to the record, not tied to a moment.',false]]}
+};
+function renderAttach(mode){
+  const m=ATTACH_MODES[mode]||ATTACH_MODES.live;
+  document.getElementById('attach-h').textContent=m.h;
+  document.getElementById('attach-serial').textContent=m.serial;
+  document.getElementById('attach-back').dataset.go=m.back;
+  const pl=document.getElementById('pegline'); pl.className='pegline '+m.cls;
+  document.getElementById('peg-txt').innerHTML=m.txt;
+  document.getElementById('peg-ts').textContent=m.ts;
+  document.getElementById('pegopt').innerHTML=m.opts.map(o=>`<button aria-pressed="${o[2]}"><b>${o[0]}</b>${o[1]}</button>`).join('');
+  const c=document.getElementById('attach-cta'); c.dataset.go=m.next;
+  c.innerHTML=`<svg class="i"><use href="#i-up"/></svg>${m.cta}`;
+}
 
 /* ---------------------------------------------------------------- routing */
 function go(name){
   if(!SCREENS.includes(name)) name='sessions';
-  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.dataset.screen===name));
+  let shown=name;
+  if(name.startsWith('attach')){ renderAttach(name==='attach'?'live':name.split('-')[1]); shown='attach'; }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.dataset.screen===shown));
   document.querySelectorAll('.rail .side-item').forEach(b=>b.classList.toggle('active',b.dataset.go===name));
   if(location.hash!=='#'+name) history.replaceState(null,'','#'+name);
   const sc=document.querySelector('.screen.on .scroll'); if(sc) sc.scrollTop=0;
@@ -681,9 +791,14 @@ function go(name){
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-go]'); if(t){e.preventDefault();go(t.dataset.go);}
 });
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.pegopt button,.mom,.segs button,.mode'); if(!b) return;
+  b.parentElement.querySelectorAll(':scope > [aria-pressed]').forEach(x=>x.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true');
+});
 window.addEventListener('hashchange',()=>go(location.hash.slice(1)));
 document.addEventListener('keydown',e=>{
-  const n=parseInt(e.key,10); if(n>=1&&n<=SCREENS.length&&!e.metaKey&&!e.ctrlKey) go(SCREENS[n-1]);
+  const n=KEYS.indexOf(e.key); if(n>=0&&!e.metaKey&&!e.ctrlKey) go(SCREENS[n]);
 });
 
 /* ---------------------------------------------------------------- fake QR (deterministic from session code) */
