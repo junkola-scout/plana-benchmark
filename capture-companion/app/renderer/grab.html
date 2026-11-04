@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Grab</title>
+<link rel="stylesheet" href="../shared/junkola.css">
+<style>
+/* Fullscreen transparent overlay. Region mode: the frozen screenshot sits
+   underneath, dimmed; dragging cuts a hole. Window mode: a picker grid.      */
+html,body{height:100%;margin:0;overflow:hidden;background:transparent;user-select:none}
+body{cursor:crosshair}
+#shot{position:fixed;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
+#dim{position:fixed;inset:0;background:rgba(10,15,28,.55)}
+#sel{position:fixed;border:2px solid var(--brand-orange);box-shadow:0 0 0 9999px rgba(10,15,28,.55);display:none;pointer-events:none}
+#sel .hd{position:absolute;width:10px;height:10px;background:var(--brand-orange);border-radius:2px}
+#sel .tl{left:-6px;top:-6px}#sel .tr{right:-6px;top:-6px}#sel .bl{left:-6px;bottom:-6px}#sel .br{right:-6px;bottom:-6px}
+#sel .lbl{position:absolute;right:0;bottom:-26px;font-family:var(--font-mono);font-size:11px;color:var(--text);background:var(--bg);padding:2px 7px;border-radius:4px;border:1px solid var(--line-strong);white-space:nowrap}
+#peg{position:absolute;left:0;top:-46px;display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--brand-orange);border-radius:var(--r-lg);padding:6px 11px;font-size:var(--fs-xs);color:var(--muted);white-space:nowrap;box-shadow:var(--sh-tip)}
+#peg b{color:var(--text)}#peg .ts{font-family:var(--font-mono);color:var(--brand-amber);font-weight:600}
+.rec{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--brand-orange);text-transform:uppercase}
+.rec .dot{width:7px;height:7px;border-radius:50%;background:var(--brand-red)}
+#hint{position:fixed;left:50%;top:24px;transform:translateX(-50%);display:flex;gap:12px;align-items:center;background:var(--bg);border:1px solid var(--line-strong);border-radius:var(--r-pill);padding:7px 16px;font-size:var(--fs-sm);color:var(--muted);box-shadow:var(--sh-toast);cursor:default}
+#hint kbd{font-family:var(--font-mono);font-size:10px;border:1px solid var(--line-strong);border-radius:3px;padding:1px 5px;color:var(--text)}
+#hint .mono{color:var(--brand-amber)}
+/* window picker */
+#wins{position:fixed;inset:0;background:rgba(10,15,28,.82);display:none;padding:70px 40px 40px;overflow:auto;cursor:default}
+#wins .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;max-width:1400px;margin:0 auto}
+#wins button{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-xl);padding:8px;text-align:left;color:var(--text);display:flex;flex-direction:column;gap:6px}
+#wins button:hover{border-color:var(--brand-orange);background:var(--raised)}
+#wins img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:var(--r-sm);background:#000}
+#wins span{font-size:var(--fs-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<img id="shot" alt="">
+<div id="dim"></div>
+<div id="sel"><span class="hd tl"></span><span class="hd tr"></span><span class="hd bl"></span><span class="hd br"></span><span class="lbl" id="lbl"></span>
+  <div id="peg"><span class="rec"><span class="dot"></span>Rec</span><span id="pegt"></span></div></div>
+<div id="hint"><span id="hint-t">Drag a region</span><span><kbd>esc</kbd> cancel</span><span class="mono" id="hint-peg"></span></div>
+<div id="wins"><div class="g" id="wins-g"></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const windowMode=location.hash==='#window';
+let scale=1,start=null,rect=null;
+function pegText(p){return p?`Pinning to <b>${p.serial} · ${p.title.replace(/</g,'&lt;')}</b> at <span class="ts">${p.offset}</span>`:`<b>No session</b> — a quick-capture session starts on release`}
+
+capture.onGrabInit(d=>{
+  scale=d.scale; $('shot').src=d.image;
+  $('pegt').innerHTML=pegText(d.peg); $('hint-peg').textContent=d.peg?`${d.peg.serial} · ${d.peg.offset}`:'';
+});
+capture.onGrabWindows(list=>{
+  $('dim').style.display='none'; $('wins').style.display='block'; $('hint-t').textContent='Click a window'; document.body.style.cursor='default';
+  $('wins-g').innerHTML=list.map(w=>`<button data-id="${w.id}"><img src="${w.thumb}" alt=""><span>${w.name.replace(/</g,'&lt;')}</span></button>`).join('')||'<p style="color:var(--muted)">No capturable windows found.</p>';
+  $('wins-g').onclick=e=>{const b=e.target.closest('button');if(b)capture.grabWindow(b.dataset.id)};
+});
+
+if(!windowMode){
+  document.addEventListener('mousedown',e=>{if(e.button!==0)return;start={x:e.clientX,y:e.clientY};$('dim').style.display='none';$('sel').style.display='block';update(e)});
+  document.addEventListener('mousemove',e=>{if(start)update(e)});
+  document.addEventListener('mouseup',e=>{if(!start)return;update(e);start=null;
+    if(rect.w<4||rect.h<4){cancel();return}
+    capture.grabDone(rect)});
+}
+function update(e){
+  const x=Math.min(start.x,e.clientX),y=Math.min(start.y,e.clientY),w=Math.abs(e.clientX-start.x),h=Math.abs(e.clientY-start.y);
+  rect={x,y,w,h}; const s=$('sel'); s.style.left=x+'px';s.style.top=y+'px';s.style.width=w+'px';s.style.height=h+'px';
+  $('lbl').textContent=`${Math.round(w*scale)} × ${Math.round(h*scale)}`;
+  $('peg').style.top=(y<60?h+10:-46)+'px';
+}
+function cancel(){ windowMode?capture.grabWindow(null):capture.grabDone(null) }
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cancel()});
+document.addEventListener('contextmenu',e=>{e.preventDefault();cancel()});
+</script>
+</body>
+</html>

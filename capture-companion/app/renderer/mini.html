@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Junkola Capture</title>
+<link rel="stylesheet" href="../shared/junkola.css">
+<style>
+/* The floating companion. Frameless; the header is the drag handle. */
+html,body{height:100%;overflow:hidden}
+body{background:var(--grad-panel);display:flex;flex-direction:column;font-size:var(--fs-sm);user-select:none}
+body::before{content:"";display:block;height:3px;background:var(--grad-brand-h);flex-shrink:0}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.mh{display:flex;align-items:center;gap:8px;padding:9px 12px 6px;-webkit-app-region:drag}
+.mh button,.mh .nodrag{-webkit-app-region:no-drag}
+.mh img{height:18px}
+.mh b{font-size:var(--fs-base)}
+.rec{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-label);font-weight:800;letter-spacing:.08em;color:var(--brand-orange);text-transform:uppercase}
+.rec .dot{width:8px;height:8px;border-radius:50%;background:var(--brand-red);animation:pulse 1.2s ease-in-out infinite}
+.rec.off{color:var(--faint)}.rec.off .dot{background:var(--line-strong);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.clock{font-family:var(--font-mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.ib{width:26px;height:26px;border-radius:var(--r-sm);display:grid;place-items:center;color:var(--muted)}
+.ib:hover{background:var(--raised);color:var(--text)}
+.ib[aria-pressed="true"]{color:var(--brand-orange)}
+.mb{padding:0 12px 8px;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.sessline{display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--muted);white-space:nowrap;overflow:hidden}
+.sessline b{color:var(--text);overflow:hidden;text-overflow:ellipsis}
+.sessline .serial{margin-left:auto}
+.startrow{display:flex;gap:6px}
+.startrow input{flex:1;min-height:34px;background:var(--raised);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:0 10px;font-size:var(--fs-sm);color:var(--text)}
+.startrow input:focus{outline:none;border-color:var(--brand-orange)}
+.capgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.capb{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid var(--line-strong);border-radius:var(--r-xl);padding:9px 4px;background:var(--surface);color:var(--muted);font-size:10px;font-weight:700}
+.capb:hover{border-color:var(--brand-orange);background:var(--raised);color:var(--text)}
+.capb svg{width:18px;height:18px;color:var(--text)}
+.capb kbd{font-family:var(--font-mono);font-size:8.5px;color:var(--faint);font-weight:500}
+.compose textarea{width:100%;min-height:52px;max-height:120px;background:var(--raised);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:8px 10px;font-size:var(--fs-sm);line-height:1.45;color:var(--text);resize:none;user-select:text}
+.compose textarea:focus{outline:none;border-color:var(--brand-orange)}
+.compose textarea::placeholder{color:var(--muted)}
+.sec{font-size:var(--fs-label);letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:700;display:flex;align-items:center;gap:8px}
+.sec .rule{flex:1;height:1px;background:var(--line);margin:0}
+.ledger{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+.row-i{display:flex;align-items:center;gap:9px;padding:6px 2px;border-bottom:1px solid var(--line);cursor:default}
+.row-i:hover{background:var(--raised)}
+.row-i:last-child{border-bottom:none}
+.th{width:34px;height:26px;border-radius:var(--r-sm);flex-shrink:0;background:var(--raised);display:grid;place-items:center;color:var(--text);font-family:var(--font-mono);font-size:8.5px;font-weight:700;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover}
+.th.note{color:var(--muted)}
+.n{flex:1;min-width:0}
+.n b{display:block;font-size:var(--fs-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.n span{font-family:var(--font-mono);font-size:9.5px;color:var(--faint)}
+.n span em{color:var(--brand-amber);font-style:normal}
+.avatar{width:18px;height:18px;font-size:7px}
+.avatar.me{background:var(--brand-orange);color:var(--bg)}
+.empty{border:1px dashed var(--line-strong);border-radius:var(--r-xl);padding:18px 12px;text-align:center;color:var(--muted);font-size:var(--fs-xs);line-height:1.5}
+.empty b{color:var(--text)}
+.mf{border-top:1px solid var(--line);padding:7px 12px;font-size:var(--fs-micro);color:var(--muted);display:flex;gap:6px;align-items:center;flex-shrink:0}
+.mf .push{margin-left:auto}
+.mf button{color:var(--brand-orange);font-size:var(--fs-micro);font-weight:700}
+body.drag .mb{outline:2px dashed var(--brand-orange);outline-offset:-6px;border-radius:var(--r-xl)}
+.toast{bottom:44px;padding:8px 12px;font-size:var(--fs-xs)}
+.perm{border:1px solid rgba(224,52,28,.5);background:rgba(224,52,28,.08);border-radius:var(--r-lg);padding:8px 10px;font-size:var(--fs-xs);color:var(--muted);line-height:1.45}
+.perm b{color:var(--text)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-region" viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/><rect x="8" y="8" width="8" height="8" rx="1" stroke-dasharray="2 2"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></symbol>
+  <symbol id="i-screen" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M21 12.5 12.6 21a5 5 0 0 1-7-7l9-9a3.3 3.3 0 0 1 4.7 4.7l-9 9a1.7 1.7 0 0 1-2.4-2.4l8-8"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 17v5M8 7l1 5-3 3h12l-3-3 1-5zM9 3h6v4H9z"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></symbol>
+</svg>
+
+<div class="mh">
+  <img src="../shared/junkola-mark.svg" alt=""><b>Capture</b>
+  <span class="rec off" id="rec"><span class="dot"></span><span id="rec-t">Idle</span></span>
+  <span class="clock" id="clock">—</span>
+  <span class="push"></span>
+  <button class="ib" id="pin" aria-pressed="true" title="Stay on top of every app (click to unpin)"><svg class="i"><use href="#i-pin"/></svg></button>
+  <button class="ib" id="expand" title="Open full companion"><svg class="i"><use href="#i-expand"/></svg></button>
+  <button class="ib" id="hide" title="Hide (⌥⇧C to bring back)"><svg class="i"><use href="#i-x"/></svg></button>
+</div>
+
+<div class="mb" id="mb">
+  <div id="perm" class="perm" hidden>⚠ <b>Screen Recording is off.</b> Grabs will be blank until you allow Junkola Capture in System Settings › Privacy &amp; Security › Screen Recording.</div>
+
+  <div id="nosess">
+    <div class="startrow"><input id="title" placeholder="Session title — e.g. Supplier review, Rivera"><button class="btn btn-brand" id="start"><svg class="i"><use href="#i-mic"/></svg>Start</button></div>
+    <div class="hint">Or just grab / drop something — a session starts on the first capture.</div>
+  </div>
+  <div id="sess" class="sessline" hidden>📅 <b id="sess-t"></b><span class="serial" id="sess-s"></span><button class="btn btn-sm btn-ghost" id="end" title="End session">End</button></div>
+
+  <div class="capgrid">
+    <button class="capb" data-grab="region"><svg class="i"><use href="#i-region"/></svg>Region<kbd>⌥⇧4</kbd></button>
+    <button class="capb" data-grab="window"><svg class="i"><use href="#i-window"/></svg>Window<kbd>⌥⇧5</kbd></button>
+    <button class="capb" data-grab="screen"><svg class="i"><use href="#i-screen"/></svg>Screen<kbd>⌥⇧3</kbd></button>
+    <button class="capb" id="attach"><svg class="i"><use href="#i-clip"/></svg>Attach<kbd>⌘O</kbd></button>
+  </div>
+  <div class="compose"><textarea id="note" rows="2" placeholder="Quick note, or paste a URL — ⌘↩ pins it to the clock"></textarea></div>
+
+  <div class="sec">Ledger · <span id="count">0</span><span class="rule"></span><span id="sync-st" class="faint" style="text-transform:none;letter-spacing:0;font-weight:600"></span></div>
+  <div class="ledger" id="ledger"></div>
+</div>
+
+<div class="mf"><span class="status-dot" id="dot"></span><span id="foot">No session · drop files anywhere on this panel</span><button class="push" id="folder">Open folder</button></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let S=null;
+const KIND={grab:'PNG',file:'FILE',note:'TXT',link:'URL'};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function initials(u){return (u||'??').split(/[\s._-]+/).map(x=>x[0]||'').join('').slice(0,2).toUpperCase()}
+
+function render(s){
+  S=s; const l=s.session;
+  $('rec').classList.toggle('off',!l); $('rec-t').textContent=l?'Rec':'Idle';
+  $('clock').textContent=l?s.offset:'—';
+  $('nosess').hidden=!!l; $('sess').hidden=!l;
+  $('pin').setAttribute('aria-pressed',String(s.onTop));
+  $('perm').hidden=s.screenPerm==='granted'||s.screenPerm==='unknown';
+  $('dot').className='status-dot '+(l?'ok':'off');
+  if(l){
+    $('sess-t').textContent=l.title; $('sess-s').textContent=l.serial;
+    $('count').textContent=l.items.length;
+    const q=l.items.filter(i=>i.synced==='queued').length;
+    $('sync-st').textContent=q?`${q} queued for Hyperspace`:(l.items.length?'local · not synced':'');
+    $('foot').textContent=`Pegged to ${l.serial} · ${l.items.length} item${l.items.length===1?'':'s'} · drop files anywhere`;
+    $('ledger').innerHTML=l.items.length?l.items.map(i=>`
+      <div class="row-i" data-path="${esc(i.path||i.url||'')}" title="${esc(i.title)}">
+        <span class="th ${i.kind}">${i.kind==='grab'?`<img src="file://${esc(i.path)}" alt="">`:(i.ext||KIND[i.kind]||'').toUpperCase().slice(0,4)}</span>
+        <div class="n"><b>${esc(i.title)}</b><span><em>${i.offset}</em> · ${i.wall}${i.w?` · ${i.w}×${i.h}`:''}${i.bytes?` · ${(i.bytes/1024).toFixed(i.bytes>1e6?0:1)} ${i.bytes>1e6?'MB':'KB'}`.replace(/(\d+)\.\d ?MB/,(m,a)=>Math.round(i.bytes/1048576)+' MB'):''}</span></div>
+        <span class="avatar me">${initials(i.by)}</span>
+      </div>`).join(''):`<div class="empty"><b>Nothing pinned yet.</b><br>Grab a region (⌥⇧4), drop a file, or type a note — it lands here stamped at the session clock.</div>`;
+  }else{
+    $('count').textContent='0'; $('sync-st').textContent='';
+    $('foot').textContent='No session · drop files anywhere on this panel';
+    $('ledger').innerHTML=`<div class="empty"><b>Start a session</b> to pin captures to its clock.<br>Everything stays on this Mac until you send it to Hyperspace.</div>`;
+  }
+}
+capture.state().then(render); capture.onState(render);
+capture.onToast(t=>{const d=document.createElement('div');d.className='toast success';d.innerHTML=`<span class="tdot"></span><b>${esc(t.title)}</b>&nbsp;${esc(t.body)}`;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)});
+capture.onFocusStart(()=>$('title').focus());
+
+$('start').onclick=()=>capture.startSession($('title').value.trim()||'Untitled session').then(()=>{$('title').value=''});
+$('title').addEventListener('keydown',e=>{if(e.key==='Enter')$('start').click()});
+$('end').onclick=()=>capture.endSession();
+document.querySelectorAll('[data-grab]').forEach(b=>b.onclick=()=>capture.grab(b.dataset.grab));
+$('attach').onclick=()=>capture.attach();
+$('pin').onclick=()=>capture.toggleOnTop();
+$('expand').onclick=()=>capture.expand();
+$('hide').onclick=()=>capture.hide();
+$('folder').onclick=()=>capture.openFolder();
+$('note').addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();const v=$('note').value.trim();if(!v)return;
+    (/^https?:\/\/\S+$/i.test(v)?capture.link(v):capture.note(v)).then(()=>{$('note').value=''});}
+});
+$('note').addEventListener('paste',e=>{const t=(e.clipboardData.getData('text')||'').trim();if(/^https?:\/\/\S+$/i.test(t)&&!$('note').value){e.preventDefault();capture.link(t)}});
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='o'){e.preventDefault();capture.attach()}});
+$('ledger').addEventListener('click',e=>{const r=e.target.closest('.row-i');if(r&&r.dataset.path)capture.openItem(r.dataset.path)});
+
+/* drag & drop files anywhere on the panel */
+['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();document.body.classList.add('drag')}));
+['dragleave','dragend'].forEach(ev=>document.addEventListener(ev,()=>document.body.classList.remove('drag')));
+document.addEventListener('drop',e=>{e.preventDefault();document.body.classList.remove('drag');
+  const paths=[...e.dataTransfer.files].map(f=>capture.pathFor(f)).filter(Boolean);
+  if(paths.length) capture.files(paths);
+  else{const u=e.dataTransfer.getData('text/uri-list')||e.dataTransfer.getData('text');if(/^https?:\/\//.test(u))capture.link(u.trim())}
+});
+</script>
+</body>
+</html>

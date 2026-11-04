@@ -21,7 +21,8 @@ shared/junkola-wordmark-white.svg  lockup for navy surfaces  (placeholder vector
 shared/junkola-wordmark-navy.svg   lockup for cream surfaces
 platform/platform.html           the main app shell (530 KB, sidebar + chat/insights/calendar)
 platform/login.html              sign-in (Tailwind-compiled, YouTube intro modal)
-document-manager/, due-diligence/, acquisition/, capture-companion/   one folder per prototype
+document-manager/, due-diligence/, acquisition/, capture-companion/, capture-mobile/   one folder per prototype
+capture-companion/app/           Electron app (the only runnable thing here) — see its README; node_modules/ and dist/ are gitignored
 ```
 
 ## Brand system (captured from junkola.ai 2026-11-04)
@@ -62,6 +63,12 @@ Rules:
    has Libre Franklin, zero console errors, run the link checker, grep for stray `PLANA`.
 7. **Commit message**: imperative subject, body says what the prototype is for and what's
    mocked vs. wired.
+
+## The Electron app (capture-companion/app)
+
+The one non-prototype: a real always-on-top companion. `npm install && npm start`. Builds with
+`electron-builder`; Linux-made Mac builds are unsigned (ad-hoc sign on the Mac, see README).
+Reuses `shared/` by copy so it's self-contained. Smoke test: `JUNKOLA_SMOKE=/tmp/p.png npx electron .`.
 
 ## Known gaps / TODO
 

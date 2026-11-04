@@ -1,0 +1,53 @@
+{
+  "name": "junkola-capture-companion",
+  "productName": "Junkola Capture",
+  "version": "0.1.0",
+  "description": "Always-on-top capture companion for Junkola Hyperspace \u2014 pins grabs, files, links and notes to the session clock.",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac --universal",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux AppImage"
+  },
+  "author": "Junkola.AI <scout@junkola.ai>",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "ai.junkola.capture",
+    "productName": "Junkola Capture",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**",
+      "assets/**",
+      "shared/**"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "assets/icon.png"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "assets/icon.png",
+      "category": "Office"
+    },
+    "publish": null
+  }
+}
