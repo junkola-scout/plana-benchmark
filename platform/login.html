@@ -434,10 +434,10 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
   .ce-list li{font-size:var(--text-base);line-height:1.4}
 }
 /* ───────────────────────────── v2: Intro video modal ─────────────────────────────
-   Opens automatically on load and autoplays hyperspace_beta_intro_video.mp4 (same folder).
-   Browsers only allow *muted* autoplay without a prior click, so the script tries with
-   sound first and falls back to muted + a "Tap for sound" button. Closes on ✕, Esc,
-   backdrop click, "Skip intro", or when the video ends.                                */
+   Opens automatically on load and autoplays the YouTube intro (youtu.be/zW-DctKjS_k) via
+   the IFrame Player API. Browsers only allow *muted* autoplay without a prior click, so
+   the script tries with sound first and falls back to muted + a "Tap for sound" button.
+   Closes on ✕, Esc, backdrop click, "Skip intro", or when the video ends.              */
 .hv-modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:calc(var(--spacing)*4)}
 .hv-modal[hidden]{display:none}
 .hv-backdrop{position:absolute;inset:0;background:rgba(12,12,13,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
@@ -460,7 +460,7 @@ body{color:var(--foreground);font-family:var(--font-geist-sans)}
 .hv-close:hover{color:#fff;border-color:rgba(229,98,3,.5);background:rgba(229,98,3,.1)}
 .hv-close:focus-visible,.hv-unmute:focus-visible,.hv-skip:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(229,98,3,.4)}
 .hv-stage{position:relative;aspect-ratio:16/9;border-radius:var(--radius-2xl);overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.08)}
-.hv-stage video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.hv-stage iframe{display:block;width:100%;height:100%;border:0;background:#000}
 .hv-unmute{
   position:absolute;left:calc(var(--spacing)*4);top:calc(var(--spacing)*4);
   display:inline-flex;align-items:center;gap:calc(var(--spacing)*2);
@@ -662,7 +662,7 @@ body.hv-open .hv-fab{opacity:0;pointer-events:none}
     </div>
 
     <div class="hv-stage">
-      <video id="introVideo" src="hyperspace_beta_intro_video.mp4" playsinline preload="auto" controls controlslist="nodownload"></video>
+      <div id="introVideo"></div><!-- replaced by the YouTube player at runtime -->
       <button type="button" class="hv-unmute" id="introUnmute" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><path d="M16 9a5 5 0 0 1 0 6"></path><path d="M19.364 18.364a9 9 0 0 0 0-12.728"></path></svg>
         Tap for sound
@@ -670,7 +670,7 @@ body.hv-open .hv-fab{opacity:0;pointer-events:none}
     </div>
 
     <div class="hv-foot">
-      <span class="hv-meta">Intro video · 1 min 48 sec</span>
+      <span class="hv-meta">Intro video</span>
       <button type="button" class="hv-skip" data-hv-close>Skip intro
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
       </button>
@@ -678,38 +678,66 @@ body.hv-open .hv-fab{opacity:0;pointer-events:none}
   </div>
 </div>
 
+<script src="https://www.youtube.com/iframe_api" async></script>
 <script>
 (function () {
+  var YT_ID  = 'zW-DctKjS_k';               // https://youtu.be/zW-DctKjS_k
   var modal  = document.getElementById('introModal');
-  var video  = document.getElementById('introVideo');
   var unmute = document.getElementById('introUnmute');
   var closeBtn = modal.querySelector('.hv-close');
   var lastFocus = null;
+  var player = null;          // YT.Player once the IFrame API is ready
+  var wantOpen = false;       // open() was called before the player existed
+  var autoplayCheck = null;
 
-  function open() {
-    lastFocus = document.activeElement;
-    if (video.ended) video.currentTime = 0;   // reopened after finishing → start over
-    modal.hidden = false;
-    document.body.classList.add('hv-open');
-    closeBtn.focus({ preventScroll: true });
+  // The IFrame API calls this global when it has loaded.
+  window.onYouTubeIframeAPIReady = function () {
+    player = new YT.Player('introVideo', {
+      videoId: YT_ID,
+      playerVars: { rel: 0, modestbranding: 1, playsinline: 1, controls: 1, autoplay: 0 },
+      events: {
+        onReady: function () { if (wantOpen) startPlayback(); },
+        onStateChange: function (e) {
+          if (e.data === YT.PlayerState.ENDED) close();
+          // Once the user unmutes from the YouTube controls, drop our button.
+          if (e.data === YT.PlayerState.PLAYING && !player.isMuted()) unmute.hidden = true;
+        }
+      }
+    });
+  };
 
+  function startPlayback() {
+    wantOpen = false;
+    clearTimeout(autoplayCheck);
     // Try autoplay with sound first; browsers usually refuse until the user has
     // interacted with the page, in which case fall back to muted autoplay and
     // offer a one-tap unmute.
-    video.muted = false;
-    var p = video.play();
-    if (p && p.catch) {
-      p.catch(function () {
-        video.muted = true;
+    player.seekTo(0, true);
+    player.unMute();
+    player.playVideo();
+    autoplayCheck = setTimeout(function () {
+      var s = player.getPlayerState();
+      if (s !== YT.PlayerState.PLAYING && s !== YT.PlayerState.BUFFERING) {
+        player.mute();
         unmute.hidden = false;
-        video.play().catch(function () {});
-      });
-    }
+        player.playVideo();
+      }
+    }, 900);
+  }
+
+  function open() {
+    lastFocus = document.activeElement;
+    modal.hidden = false;
+    document.body.classList.add('hv-open');
+    closeBtn.focus({ preventScroll: true });
+    if (player && player.playVideo) startPlayback(); else wantOpen = true;
   }
 
   function close() {
     if (modal.hidden) return;
-    video.pause();
+    clearTimeout(autoplayCheck);
+    wantOpen = false;
+    if (player && player.pauseVideo) player.pauseVideo();
     modal.hidden = true;
     document.body.classList.remove('hv-open');
     var email = document.getElementById('email');
@@ -717,12 +745,11 @@ body.hv-open .hv-fab{opacity:0;pointer-events:none}
   }
 
   unmute.addEventListener('click', function () {
-    video.muted = false;
     unmute.hidden = true;
-    video.play().catch(function () {});
+    if (!player) return;
+    player.unMute();
+    player.playVideo();
   });
-  video.addEventListener('volumechange', function () { if (!video.muted) unmute.hidden = true; });
-  video.addEventListener('ended', close);
 
   modal.querySelectorAll('[data-hv-close]').forEach(function (el) { el.addEventListener('click', close); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
@@ -730,7 +757,7 @@ body.hv-open .hv-fab{opacity:0;pointer-events:none}
   // Keep keyboard focus inside the dialog while it is open.
   modal.addEventListener('keydown', function (e) {
     if (e.key !== 'Tab') return;
-    var f = modal.querySelectorAll('button:not([hidden]), video, [href]');
+    var f = modal.querySelectorAll('button:not([hidden]), iframe, [href]');
     var first = f[0], last = f[f.length - 1];
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }

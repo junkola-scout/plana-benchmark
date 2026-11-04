@@ -267,7 +267,7 @@ a.side-item,.side-item.ext{text-decoration:none}
 <!-- Dev bar — orientation for whoever is testing the prototype. Delete this div when shipping. -->
 <div class="dev-bar">
   <span>📄 <b>dd-admin.html</b> — PLANA internal admin (knowledge-management system)</span>
-  <a href="index.html" target="_blank">Open index.html (investor portal) →</a>
+  <a href="due-diligence-answer-engine.html" target="_blank">Open the investor portal →</a>
 </div>
 
 <div id="planaView">
@@ -620,7 +620,7 @@ function renderInvites(){
     </div>`).join('');
 }
 function inviteUrl(iv){
-  return `index.html?invite=${iv.token}&iid=${iv.id}&iname=${encodeURIComponent(iv.name)}&iemail=${encodeURIComponent(iv.email)}&irole=${encodeURIComponent(iv.role)}&iby=${encodeURIComponent(iv.by)}`;
+  return `due-diligence-answer-engine.html?invite=${iv.token}&iid=${iv.id}&iname=${encodeURIComponent(iv.name)}&iemail=${encodeURIComponent(iv.email)}&irole=${encodeURIComponent(iv.role)}&iby=${encodeURIComponent(iv.by)}`;
 }
 function copyInviteLink(token){
   const iv = state.invites.find(i=>i.token===token);
@@ -659,7 +659,7 @@ function openInviteEmail(iv){
    Notification email preview (admin → investor)
    ============================================================ */
 function openNotifyEmail(question, answer, cat, by, qid){
-  const investorUrl = `index.html?answered=1&qid=${qid}&q=${encodeURIComponent(question)}&a=${encodeURIComponent(answer)}&cat=${encodeURIComponent(cat)}&by=${encodeURIComponent(by)}`;
+  const investorUrl = `due-diligence-answer-engine.html?answered=1&qid=${qid}&q=${encodeURIComponent(question)}&a=${encodeURIComponent(answer)}&cat=${encodeURIComponent(cat)}&by=${encodeURIComponent(by)}`;
   document.getElementById('emailSubject').textContent = 'Your question has been answered';
   document.getElementById('emailBody').innerHTML = `
     <div class="email-meta">
