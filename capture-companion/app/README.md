@@ -15,19 +15,31 @@ this folder is the first working slice of it.
 |---|---|
 | Floating panel | frameless, always-on-top, all Spaces, excluded from its own grabs (`setContentProtection`) |
 | Sessions | start / end from the panel or tray; serials `S-0001…`; first capture auto-starts a "Quick capture" session |
-| Grab region | **⌥⇧4** — native screenshot of the display under the cursor, drag a box, pinned at the session offset |
-| Grab window | **⌥⇧5** — picker of open windows |
-| Grab full screen | **⌥⇧3** |
+| Grab region | **⌥⇧4** (Win: Ctrl+Shift+4) — native screenshot of the display under the cursor, drag a box, pinned at the session offset |
+| Grab window | **⌥⇧5** (Win: Ctrl+Shift+5) — picker of open windows |
+| Grab full screen | **⌥⇧3** (Win: Ctrl+Shift+3) |
 | Attach files | ⌘O picker, or drag files onto the panel |
 | Notes / links | type, ⌘↩ — a pasted URL files as a link |
-| Show / hide | **⌥⇧C** or the tray icon |
+| Show / hide | **⌥⇧C** (Win: Ctrl+Shift+C) or the tray icon |
 | Ledger | every item with offset, wall time, size, who; click to open |
-| Storage | `~/Library/Application Support/Junkola Capture/sessions/<serial>/` — files + `ledger.json` |
+| Storage | `~/Library/Application Support/Junkola Capture/sessions/<serial>/` (Windows: `%APPDATA%\\Junkola Capture\\sessions\\`) — files + `ledger.json` |
 | Full companion | ⤢ opens the desktop prototype (prep / live / record views) in a normal window |
 
 **Not wired yet (stubs):** sending to Hyperspace (`sync` only marks items `queued`), audio
 recording / transcript (the phone app or your note-taker owns that for now), multi-device roster,
 place-on-timeline. The data model is ready for all of it — see `ledger.json`.
+
+## Windows
+
+Same app, same features. Hotkeys are **Ctrl+Shift+4 / 5 / 3** (grabs) and **Ctrl+Shift+C**
+(show/hide) — Alt+Shift+digits collides with Windows' keyboard-language switch. ⌘ in the UI
+becomes Ctrl. The panel uses the Windows TOPMOST level, so it stays above browsers, Teams and
+Zoom; it follows you across virtual desktops when you move it. No screen-recording permission
+prompt on Windows.
+
+A Linux-built `Junkola Capture 0.1.0.exe` (NSIS installer) or the portable build will trip
+SmartScreen because it's unsigned: **More info › Run anyway**. For the team, sign with a code-
+signing cert (`CSC_LINK`) or build on a Windows box with `npm run dist:win`.
 
 ## Run from source
 

@@ -194,10 +194,10 @@ function createTray() {
       { label: l ? `● ${l.serial} · ${l.title}` : 'No session', enabled: false },
       { label: l ? 'End session' : 'Start session…', click: () => l ? endSession() : (toggleMini(), mini && mini.webContents.send('focus:start')) },
       { type: 'separator' },
-      { label: 'Show / hide companion', accelerator: 'Alt+Shift+C', click: toggleMini },
-      { label: 'Grab region', accelerator: 'Alt+Shift+4', click: () => grab('region') },
-      { label: 'Grab window', accelerator: 'Alt+Shift+5', click: () => grab('window') },
-      { label: 'Grab full screen', accelerator: 'Alt+Shift+3', click: () => grab('screen') },
+      { label: 'Show / hide companion', accelerator: (IS_MAC ? 'Alt+Shift+' : 'Ctrl+Shift+') + 'C', click: toggleMini },
+      { label: 'Grab region', accelerator: (IS_MAC ? 'Alt+Shift+' : 'Ctrl+Shift+') + '4', click: () => grab('region') },
+      { label: 'Grab window', accelerator: (IS_MAC ? 'Alt+Shift+' : 'Ctrl+Shift+') + '5', click: () => grab('window') },
+      { label: 'Grab full screen', accelerator: (IS_MAC ? 'Alt+Shift+' : 'Ctrl+Shift+') + '3', click: () => grab('screen') },
       { type: 'separator' },
       { label: 'Open full companion', click: openBig },
       { label: 'Open sessions folder', click: () => shell.openPath(ROOT) },
@@ -211,10 +211,11 @@ function createTray() {
 
 function registerShortcuts() {
   const ok = [];
-  ok.push(globalShortcut.register('Alt+Shift+C', toggleMini));
-  ok.push(globalShortcut.register('Alt+Shift+4', () => grab('region')));
-  ok.push(globalShortcut.register('Alt+Shift+5', () => grab('window')));
-  ok.push(globalShortcut.register('Alt+Shift+3', () => grab('screen')));
+  const M = IS_MAC ? 'Alt+Shift' : 'Ctrl+Shift';
+  ok.push(globalShortcut.register(`${M}+C`, toggleMini));
+  ok.push(globalShortcut.register(`${M}+4`, () => grab('region')));
+  ok.push(globalShortcut.register(`${M}+5`, () => grab('window')));
+  ok.push(globalShortcut.register(`${M}+3`, () => grab('screen')));
   if (ok.includes(false)) console.warn('[junkola] some global shortcuts could not be registered (another app owns them)');
 }
 

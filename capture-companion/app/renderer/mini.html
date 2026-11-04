@@ -141,6 +141,7 @@ function render(s){
     $('ledger').innerHTML=`<div class="empty"><b>Start a session</b> to pin captures to its clock.<br>Everything stays on this Mac until you send it to Hyperspace.</div>`;
   }
 }
+if(!/Mac/.test(navigator.platform)){document.querySelectorAll('kbd').forEach(k=>{k.textContent=k.textContent.replace('⌥⇧','Ctrl+Shift+').replace('⌘','Ctrl+')});$('note').placeholder=$('note').placeholder.replace('⌘↩','Ctrl+Enter')}
 capture.state().then(render); capture.onState(render);
 capture.onToast(t=>{const d=document.createElement('div');d.className='toast success';d.innerHTML=`<span class="tdot"></span><b>${esc(t.title)}</b>&nbsp;${esc(t.body)}`;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)});
 capture.onFocusStart(()=>$('title').focus());
